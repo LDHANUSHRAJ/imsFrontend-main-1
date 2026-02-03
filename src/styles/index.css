@@ -1,0 +1,27 @@
+@import "tailwindcss";
+
+@theme {
+    --color-christBlue: #0B2C5D;
+    --color-christGray: #F4F6F8;
+    --color-success: #2E7D32;
+    --color-warning: #ED6C02;
+}
+
+body {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    @apply bg-christGray text-slate-800;
+}
+
+@layer components {
+    .input {
+        @apply w-full border border-gray-300 rounded-lg px-4 py-2.5 text-sm outline-none focus:ring-2 focus:ring-christBlue focus:border-transparent bg-white transition-all duration-200;
+    }
+
+    .btn-primary {
+        @apply bg-christBlue text-white px-4 py-2 rounded-lg hover:opacity-90 transition-opacity;
+    }
+
+    .card {
+        @apply bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden;
+    }
+}

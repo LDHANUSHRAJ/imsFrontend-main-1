@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+    --color-christBlue: #0B2C5D;
+    --color-christGray: #F4F6F8;
+    --color-success: #2E7D32;
+    --color-warning: #ED6C02;
+}
+
+body {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+}
