@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
-import { loginUser } from "../services/auth.service";
+import { AuthService } from "../services/auth.service";
+import api from "../services/api";
 
 const AuthContext = createContext();
 
@@ -15,47 +16,35 @@ export function AuthProvider({ children }) {
 
     const login = async (email, password, role) => {
         try {
-            // 1. Try Real Backend Login
-            // Note: The backend might expect different payload structure. 
-            // We pass what the pages provide.
-            try {
-                const data = await loginUser({ email, password, role });
-                const userData = { ...data, role: role || data.role }; // Ensure role is present
-                setUser(userData);
-                localStorage.setItem("imsUser", JSON.stringify(userData));
-                return userData;
-            } catch (apiError) {
-                // If API fails, check for Dev/Demo credentials
-                console.warn("API Login failed, checking demo credentials...", apiError);
+            // Call Real Backend Login
+            console.log("Attempting login to:", api.defaults.baseURL);
+            const authResponse = await AuthService.login({
+                username: email,
+                password: password
+            });
+            console.log("Login successful:", authResponse);
 
-                // MOCK CREDENTIALS FOR TESTING
-                const validMock =
-                    (email === "ic@christ.in" && role === "IC") ||
-                    (email === "hod@christ.in" && role === "HOD") ||
-                    (email === "faculty@christ.in" && role === "FACULTY") ||
-                    (email === "recruiter@company.com" && role === "RECRUITER");
-
-                // Check dynamically registered users from localStorage (for "Store Password" demo)
-                const storedUsers = JSON.parse(localStorage.getItem("mock_users") || "[]");
-                const registeredUser = storedUsers.find(u => u.email === email && u.role === role);
-
-                if ((validMock && password === "admin") || (registeredUser && registeredUser.password === password)) {
-                    const mockUser = {
-                        name: registeredUser ? registeredUser.companyName || registeredUser.recruiterName : (role === "RECRUITER" ? "John Doe (Recruiter)" : `Dr. ${role} User`),
-                        email,
-                        role,
-                        token: "mock-jwt-token"
-                    };
-                    setUser(mockUser);
-                    localStorage.setItem("imsUser", JSON.stringify(mockUser));
-                    return mockUser;
-                }
-
-                throw apiError; // Throw original error if not a valid mock
-            }
+            const userData = {
+                access_token: authResponse.access_token,
+                token_type: authResponse.token_type,
+                role: role,
+                email: email
+            };
+            setUser(userData);
+            localStorage.setItem("imsUser", JSON.stringify(userData));
+            return userData;
         } catch (error) {
-            console.error("Login error:", error);
-            throw error;
+            console.error("Login failed:", error);
+            // Enhance error message for the UI
+            if (error.response) {
+                console.error("Server Response:", error.response.data);
+                throw new Error(error.response.data?.detail?.[0]?.msg || error.response.data?.message || `Login failed: ${error.response.status}`);
+            } else if (error.request) {
+                console.error("No response received:", error.request);
+                throw new Error("Unable to connect to the server. Please check your internet connection or try again later.");
+            } else {
+                throw error;
+            }
         }
     };
 
@@ -64,9 +53,15 @@ export function AuthProvider({ children }) {
         localStorage.removeItem("imsUser");
     };
 
+    const updateUser = (data) => {
+        const updatedUser = { ...user, ...data };
+        setUser(updatedUser);
+        localStorage.setItem("imsUser", JSON.stringify(updatedUser));
+    };
+
 
     return (
-        <AuthContext.Provider value={{ user, login, logout, isAuthenticated: !!user }}>
+        <AuthContext.Provider value={{ user, login, logout, updateUser, isAuthenticated: !!user }}>
             {children}
         </AuthContext.Provider>
     );

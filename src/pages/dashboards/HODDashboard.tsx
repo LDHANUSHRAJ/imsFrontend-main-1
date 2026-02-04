@@ -27,31 +27,22 @@ const HODDashboard = () => {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard label="Total Students" value="450" icon={Users} color="navy" />
-                <StatCard label="Placed Rate" value="68%" icon={ShieldCheck} color="green" trend="+12% vs 2025" trendUp />
-                <StatCard label="Pending Approvals" value="12" icon={AlertCircle} color="amber" />
+                <StatCard label="Total Students" value="--" icon={Users} color="navy" />
+                <StatCard label="Placed Rate" value="--" icon={ShieldCheck} color="green" />
+                <StatCard label="Pending Approvals" value="--" icon={AlertCircle} color="amber" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <PlacementStatsChart data={[
-                    { name: 'CS', placed: 120, pending: 30 },
-                    { name: 'IT', placed: 90, pending: 20 },
-                    { name: 'EC', placed: 80, pending: 40 },
-                ]} />
+                <PlacementStatsChart data={[]} />
 
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                     <h3 className="font-bold text-[#0F2137] uppercase tracking-wider text-sm mb-6">Pending Student Approvals (LOR Requests)</h3>
                     <Table headers={['Student', 'Register No', 'Recruiter', 'Action']}>
-                        {[1, 2, 3].map((i) => (
-                            <TableRow key={i}>
-                                <TableCell className="font-bold">Student {i}</TableCell>
-                                <TableCell className="font-mono text-xs text-[#3B82F6]">234720{i}</TableCell>
-                                <TableCell className="text-slate-500">Global Tech Solutions</TableCell>
-                                <TableCell>
-                                    <Button variant="ghost" size="sm" className="font-bold text-xs">REVIEW DOSSIER</Button>
-                                </TableCell>
-                            </TableRow>
-                        ))}
+                        <TableRow>
+                            <TableCell colSpan={4} className="text-center text-slate-400 py-8">
+                                No pending approvals
+                            </TableCell>
+                        </TableRow>
                     </Table>
                 </div>
             </div>

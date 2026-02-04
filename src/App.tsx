@@ -1,5 +1,5 @@
 import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
 import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Calendar, Award } from 'lucide-react';
 
 // Providers - MUST be at the top
@@ -22,6 +22,7 @@ import Login from './pages/Login'; // Recruiter Registration
 import Dashboard from './pages/Dashboard';
 import SessionList from './pages/sessions/SessionList';
 import RecruiterManagement from './pages/recruiters/RecruiterManagement';
+import RecruiterProfile from './pages/recruiters/RecruiterProfile';
 import JobPostingList from './pages/jobs/JobPostingList';
 import JobForm from './pages/jobs/JobForm';
 import ApplicationList from './pages/applications/ApplicationList';
@@ -86,6 +87,20 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
   const navItems = getNavItems();
 
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    const role = user?.role;
+    if (role === 'RECRUITER' || role === 'CORPORATE') {
+      navigate('/login/recruiter');
+    } else {
+      navigate('/');
+    }
+    // Small timeout ensures navigation happens before state clears, 
+    // preventing ProtectedRoute from intercepting and redirecting to /login/staff
+    setTimeout(logout, 50);
+  };
+
   return (
     <div className="flex bg-gray-100 min-h-screen">
       <aside className="w-64 bg-[#0F2540] text-white fixed h-full flex flex-col justify-between z-20 shadow-xl">
@@ -123,7 +138,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               <p className="truncate text-sm text-gray-300">{user?.email}</p>
             </div>
           </div>
-          <button onClick={logout} className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 w-full rounded-lg transition-colors text-base font-medium">
+          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 w-full rounded-lg transition-colors text-base font-medium">
             <LogOut size={20} />
             <span>Sign Out</span>
           </button>
@@ -165,6 +180,8 @@ const App = () => {
                     <Route path="/recruiters" element={<RecruiterManagement />} />
                   </Route>
 
+                  <Route path="/recruiters/profile" element={<RecruiterProfile />} />
+
                   <Route path="/jobs" element={<JobPostingList />} />
                   <Route path="/jobs/new" element={<JobForm />} />
                   <Route path="/jobs/:id/edit" element={<JobForm />} />
@@ -176,6 +193,8 @@ const App = () => {
                   <Route path="/closure" element={<ClosureEvaluation />} />
                 </Route>
 
+
+
                 {/* Catch all */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
@@ -183,7 +202,7 @@ const App = () => {
           </Layout>
         </Router>
       </NotificationProvider>
-    </AuthProvider>
+    </AuthProvider >
   );
 };
 

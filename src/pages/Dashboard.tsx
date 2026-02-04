@@ -5,6 +5,7 @@ import ICDashboard from './dashboards/ICDashboard';
 import FacultyDashboard from './dashboards/FacultyDashboard';
 import HODDashboard from './dashboards/HODDashboard';
 import RecruiterDashboard from './dashboards/RecruiterDashboard';
+import StudentDashboard from './dashboards/StudentDashboard';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -21,6 +22,8 @@ const Dashboard = () => {
             return <FacultyDashboard />;
         case 'RECRUITER':
             return <RecruiterDashboard />;
+        case 'STUDENT':
+            return <StudentDashboard />;
         default:
             return (
                 <div className="flex items-center justify-center min-h-[60vh]">

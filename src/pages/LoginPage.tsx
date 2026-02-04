@@ -29,9 +29,9 @@ const LoginPage = () => {
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-[#0F2540] to-[#1E3A5F] flex items-center justify-center p-6 bg-cover bg-center" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1497294815431-9365093b7331?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80")', backgroundBlendMode: 'overlay' }}>
+        <div className="min-h-screen bg-slate-50 flex items-center justify-center p-6">
             {/* Login Card */}
-            <div className="bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl w-full max-w-[500px] p-10 transform transition-all hover:scale-[1.005]">
+            <div className="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-[500px] p-10 transform transition-all hover:shadow-2xl">
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-6">

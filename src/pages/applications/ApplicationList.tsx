@@ -1,8 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ApplicationService } from '../../services/mock/ApplicationService';
-import { JobService } from '../../services/mock/JobService';
-import type { StudentApplication, JobPosting } from '../../types';
+import { InternshipService } from '../../services/internship.service';
+import type { StudentApplication, Internship } from '../../types';
 import { User, Calendar, Briefcase, Building2, Filter } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import SearchBar from '../../components/ui/SearchBar';
@@ -10,8 +9,10 @@ import { ExportButton } from '../../utils/export';
 import { CardSkeleton } from '../../components/ui/Skeleton';
 
 const ApplicationList = () => {
-    const [applications, setApplications] = useState<StudentApplication[]>([]);
-    const [jobs, setJobs] = useState<JobPosting[]>([]);
+    // Extended type to include Job details for display
+    type ExtendedApplication = StudentApplication & { jobTitle: string; companyName: string };
+
+    const [applications, setApplications] = useState<ExtendedApplication[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<string>('ALL');
@@ -22,12 +23,30 @@ const ApplicationList = () => {
 
     const loadData = async () => {
         try {
-            const [appData, jobData] = await Promise.all([
-                ApplicationService.getAll(),
-                JobService.getAll()
-            ]);
-            setApplications(appData);
-            setJobs(jobData);
+            // 1. Get all my internships
+            const myJobs = await InternshipService.getMyInternships();
+
+            // 2. For each job, get applications
+            // This might be heavy if many jobs, but necessary without a specific endpoint
+            const appPromises = myJobs.map(async (job) => {
+                try {
+                    const apps = await InternshipService.getApplications(job.id);
+                    // Attach job details to each app
+                    return apps.map(app => ({
+                        ...app,
+                        jobTitle: job.title,
+                        companyName: (job as any).company_name || 'My Company' // Type fallback
+                    }));
+                } catch (e) {
+                    console.error(`Failed to load apps for job ${job.id}`, e);
+                    return [];
+                }
+            });
+
+            const results = await Promise.all(appPromises);
+            const allApps = results.flat();
+
+            setApplications(allApps);
         } catch (error) {
             console.error('Error loading data:', error);
         } finally {
@@ -35,14 +54,11 @@ const ApplicationList = () => {
         }
     };
 
-    const getJobDetails = (jobId: string) => {
-        return jobs.find(j => j.id === jobId);
-    };
-
     const getStatusBadge = (status: string) => {
         switch (status) {
             case 'APPROVED':
-                return <Badge variant="success">Approved</Badge>;
+            case 'SHORTLISTED': // Assuming SHORTLISTED is a valid status for recruiters
+                return <Badge variant="success">{status}</Badge>;
             case 'REJECTED':
                 return <Badge variant="error">Rejected</Badge>;
             default:
@@ -53,8 +69,8 @@ const ApplicationList = () => {
     // Filter and search logic
     const filteredApplications = applications.filter(app => {
         const matchesSearch =
-            app.studentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            app.studentRegNo.toLowerCase().includes(searchQuery.toLowerCase());
+            (app.student?.name || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+            (app.student?.email || '').toLowerCase().includes(searchQuery.toLowerCase());
 
         const matchesStatus = statusFilter === 'ALL' || app.status === statusFilter;
 
@@ -62,17 +78,14 @@ const ApplicationList = () => {
     });
 
     // Prepare export data
-    const exportData = filteredApplications.map(app => {
-        const job = getJobDetails(app.jobId);
-        return {
-            'Student Name': app.studentName,
-            'Register No': app.studentRegNo,
-            'Company': job?.companyName || 'N/A',
-            'Position': job?.title || 'N/A',
-            'Status': app.status,
-            'Applied Date': app.appliedAt
-        };
-    });
+    const exportData = filteredApplications.map(app => ({
+        'Student Name': app.student?.name || 'N/A',
+        'Email': app.student?.email || 'N/A',
+        'Student ID': app.student_id,
+        'Position': app.jobTitle,
+        'Status': app.status,
+        'Applied Date': new Date(app.created_at).toLocaleDateString()
+    }));
 
     if (loading) {
         return (
@@ -110,7 +123,7 @@ const ApplicationList = () => {
                         <SearchBar
                             value={searchQuery}
                             onChange={setSearchQuery}
-                            placeholder="Search by student name or register number..."
+                            placeholder="Search by student name or email..."
                         />
                     </div>
                     <div className="relative">
@@ -122,7 +135,7 @@ const ApplicationList = () => {
                         >
                             <option value="ALL">All Status</option>
                             <option value="PENDING">Pending</option>
-                            <option value="APPROVED">Approved</option>
+                            <option value="APPROVED">Shortlisted</option>
                             <option value="REJECTED">Rejected</option>
                         </select>
                     </div>
@@ -144,45 +157,34 @@ const ApplicationList = () => {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {filteredApplications.map((application) => {
-                        const job = getJobDetails(application.jobId);
-                        return (
-                            <Link
-                                key={application.id}
-                                to={`/applications/${application.id}`}
-                                className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-slate-200 hover:border-[#3B82F6] group"
-                            >
-                                <div className="flex justify-between items-start mb-4">
-                                    <div className="bg-blue-50 p-3 rounded-xl group-hover:bg-blue-100 transition-colors">
-                                        <User className="text-[#3B82F6]" size={24} />
-                                    </div>
-                                    {getStatusBadge(application.status)}
+                    {filteredApplications.map((application) => (
+                        <Link
+                            key={application.id}
+                            to={`/applications/${application.id}`}
+                            className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-slate-200 hover:border-[#3B82F6] group"
+                        >
+                            <div className="flex justify-between items-start mb-4">
+                                <div className="bg-blue-50 p-3 rounded-xl group-hover:bg-blue-100 transition-colors">
+                                    <User className="text-[#3B82F6]" size={24} />
                                 </div>
+                                {getStatusBadge(application.status)}
+                            </div>
 
-                                <h3 className="font-bold text-lg text-[#0F2137] mb-1">{application.studentName}</h3>
-                                <p className="text-slate-500 text-sm mb-4 font-mono">USN: {application.studentRegNo}</p>
+                            <h3 className="font-bold text-lg text-[#0F2137] mb-1">{application.student?.name}</h3>
+                            <p className="text-slate-500 text-sm mb-4 truncate" title={application.student?.email}>{application.student?.email}</p>
 
-                                <div className="space-y-2 text-sm text-slate-600">
-                                    {job && (
-                                        <>
-                                            <div className="flex items-center gap-2">
-                                                <Building2 size={16} className="text-slate-400" />
-                                                <span className="truncate">{job.companyName || job.companyId}</span>
-                                            </div>
-                                            <div className="flex items-center gap-2">
-                                                <Briefcase size={16} className="text-slate-400" />
-                                                <span className="truncate">{job.title}</span>
-                                            </div>
-                                        </>
-                                    )}
-                                    <div className="flex items-center gap-2 text-[#3B82F6] font-medium mt-3 pt-3 border-t border-slate-100">
-                                        <Calendar size={16} />
-                                        <span>Applied: {application.appliedAt}</span>
-                                    </div>
+                            <div className="space-y-2 text-sm text-slate-600">
+                                <div className="flex items-center gap-2">
+                                    <Briefcase size={16} className="text-slate-400" />
+                                    <span className="truncate">{application.jobTitle}</span>
                                 </div>
-                            </Link>
-                        );
-                    })}
+                                <div className="flex items-center gap-2 text-[#3B82F6] font-medium mt-3 pt-3 border-t border-slate-100">
+                                    <Calendar size={16} />
+                                    <span>Applied: {new Date(application.created_at).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        </Link>
+                    ))}
                 </div>
             )}
         </div>

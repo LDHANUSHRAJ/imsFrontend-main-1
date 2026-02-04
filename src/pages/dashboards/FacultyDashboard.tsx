@@ -26,30 +26,20 @@ const FacultyDashboard = () => {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <StatCard label="Assigned Mentees" value="15" icon={Users} color="navy" />
-                <StatCard label="Pending Log Reviews" value="08" icon={Clock} color="amber" />
-                <StatCard label="Final Reports Due" value="04" icon={BookOpen} color="green" />
+                <StatCard label="Assigned Mentees" value="--" icon={Users} color="navy" />
+                <StatCard label="Pending Log Reviews" value="--" icon={Clock} color="amber" />
+                <StatCard label="Final Reports Due" value="--" icon={BookOpen} color="green" />
             </div>
 
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
                 <div className="p-6 border-b border-slate-100 flex justify-between items-center">
                     <h3 className="font-bold text-[#0F2137] uppercase tracking-wider text-sm">Active Mentees Progress</h3>
-                    <button className="text-[#3B82F6] text-xs font-bold hover:underline flex items-center gap-1">
-                        VIEW ALL <ArrowRight size={14} />
-                    </button>
                 </div>
                 <Table headers={['Student Name', 'Company', 'Current Phase', 'Last Log']}>
                     <TableRow>
-                        <TableCell className="font-bold text-slate-800">Rahul Sharma</TableCell>
-                        <TableCell className="text-slate-500">Google India</TableCell>
-                        <TableCell><Badge variant="info">In Progress</Badge></TableCell>
-                        <TableCell className="text-xs font-medium text-slate-400">24 mins ago</TableCell>
-                    </TableRow>
-                    <TableRow>
-                        <TableCell className="font-bold text-slate-800">Sneha Kapoor</TableCell>
-                        <TableCell className="text-slate-500">Microsoft</TableCell>
-                        <TableCell><Badge variant="success">Completed</Badge></TableCell>
-                        <TableCell className="text-xs font-medium text-slate-400">Yesterday</TableCell>
+                        <TableCell colSpan={4} className="text-center text-slate-400 py-8">
+                            No assigned mentees found.
+                        </TableCell>
                     </TableRow>
                 </Table>
             </div>

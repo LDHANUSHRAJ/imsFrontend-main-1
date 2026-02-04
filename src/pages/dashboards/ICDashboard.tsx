@@ -1,68 +1,41 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { useNotifications } from '../../context/NotificationContext';
-import { Users, Building2, Briefcase, Calendar, CheckCircle, Plus } from 'lucide-react';
+import { Users, Building2, Briefcase, Calendar, CheckCircle } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
-import Button from '../../components/ui/Button';
 import PlacementStatsChart from '../../components/charts/PlacementStatsChart';
 import ApplicationsTrendChart from '../../components/charts/ApplicationsTrendChart';
 import DashboardFilters from '../../components/ui/DashboardFilters';
-import Modal from '../../components/ui/Modal';
-import SessionForm from '../sessions/SessionForm';
-import RecruiterForm from '../recruiters/RecruiterForm';
-import { SessionService } from '../../services/mock/SessionService';
-import { RecruiterService } from '../../services/mock/RecruiterService';
-import type { InternshipSession } from '../../types';
+import { AdminService } from '../../services/admin.service';
+import { InternshipService } from '../../services/internship.service';
+import { Internship } from '../../types';
 
 const ICDashboard = () => {
-    const { addNotification } = useNotifications();
+    const [stats, setStats] = useState<any>({});
+    const [pendingInternships, setPendingInternships] = useState<Internship[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
     const [year, setYear] = useState('2024-2025');
     const [batch, setBatch] = useState('All Batches');
-    const [isSessionModalOpen, setIsSessionModalOpen] = useState(false);
-    const [isRecruiterModalOpen, setIsRecruiterModalOpen] = useState(false);
 
-    const handleCreateSession = async (data: Partial<InternshipSession>) => {
-        console.log("Creating session:", data);
-        try {
-            await SessionService.create(data);
-            addNotification({
-                title: 'Session Created',
-                message: `${data.program} ${data.academicYear} session is now active.`,
-                type: 'success',
-                category: 'SYSTEM'
-            });
-        } catch (error) {
-            console.error("Session creation failed", error);
-            addNotification({
-                title: 'Error',
-                message: 'Failed to create session.',
-                type: 'error',
-                category: 'SYSTEM'
-            });
-        }
-        setIsSessionModalOpen(false);
-    };
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            try {
+                // Fetch stats and pending internships
+                const [statsData, pendingData] = await Promise.all([
+                    AdminService.getStats(),
+                    InternshipService.getPendingInternships()
+                ]);
+                setStats(statsData || {});
+                setPendingInternships(pendingData || []);
+            } catch (error) {
+                console.error("Failed to fetch dashboard data", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
 
-    const handleAddCorporate = async (data: any) => {
-        console.log("Adding corporate:", data);
-        try {
-            await RecruiterService.create(data);
-            addNotification({
-                title: 'Recruiter Added',
-                message: `Invitation sent to ${data.email}`,
-                type: 'success',
-                category: 'SYSTEM'
-            });
-        } catch (error) {
-            console.error("Recruiter creation failed", error);
-            addNotification({
-                title: 'Error',
-                message: 'Failed to add recruiter.',
-                type: 'error',
-                category: 'SYSTEM'
-            });
-        }
-        setIsRecruiterModalOpen(false);
-    };
+        fetchDashboardData();
+    }, []);
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
@@ -70,22 +43,6 @@ const ICDashboard = () => {
                 <div>
                     <h1 className="text-2xl font-bold text-[#0F2137]">Internship Coordinator Dashboard</h1>
                     <p className="text-slate-500 text-sm font-medium mt-1">Manage corporate recruiter accounts and global internship sessions.</p>
-                </div>
-                <div className="flex gap-3">
-                    <Button
-                        variant="secondary"
-                        className="w-auto gap-2"
-                        onClick={() => setIsRecruiterModalOpen(true)}
-                    >
-                        <Plus size={18} /> Add Corporate
-                    </Button>
-                    <Button
-                        variant="primary"
-                        className="w-auto gap-2"
-                        onClick={() => setIsSessionModalOpen(true)}
-                    >
-                        <Plus size={18} /> Create Session
-                    </Button>
                 </div>
             </div>
 
@@ -99,46 +56,35 @@ const ICDashboard = () => {
             />
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard label="Active Students" value="120" icon={Users} color="navy" />
-                <StatCard label="Corporate Partners" value="45" icon={Building2} color="purple" />
-                <StatCard label="Open Vacancies" value="18" icon={Briefcase} color="amber" />
-                <StatCard label="Pending Recruiter Access" value="03" icon={CheckCircle} color="green" />
+                <StatCard label="Active Students" value={stats.activeStudents || '--'} icon={Users} color="navy" />
+                <StatCard label="Corporate Partners" value={stats.corporatePartners || '--'} icon={Building2} color="purple" />
+                <StatCard label="Open Vacancies" value={stats.openVacancies || '--'} icon={Briefcase} color="amber" />
+                <StatCard label="Pending Approvals" value={pendingInternships.length.toString()} icon={CheckCircle} color="green" />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <PlacementStatsChart data={[
-                    { name: 'MCA', placed: 40, pending: 24 },
-                    { name: 'MBA', placed: 65, pending: 15 },
-                    { name: 'MSc CS', placed: 30, pending: 10 },
-                    { name: 'BCA', placed: 80, pending: 35 },
-                ]} />
-                <ApplicationsTrendChart data={[
-                    { name: 'Jan', applications: 20 },
-                    { name: 'Feb', applications: 45 },
-                    { name: 'Mar', applications: 70 },
-                    { name: 'Apr', applications: 65 },
-                    { name: 'May', applications: 100 },
-                ]} />
+                {/* Charts populated with empty/real data placeholders for now */}
+                <PlacementStatsChart data={[]} />
+                <ApplicationsTrendChart data={[]} />
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-                    <h3 className="font-bold text-[#0F2137] uppercase tracking-wider text-sm mb-6">Recruiter Access Requests</h3>
+                    <h3 className="font-bold text-[#0F2137] uppercase tracking-wider text-sm mb-6">Pending Internship Approvals</h3>
                     <div className="space-y-3">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="flex items-center justify-between p-4 bg-slate-50 rounded-xl border border-slate-100 group hover:border-[#3B82F6] transition-colors">
-                                <div className="flex items-center space-x-4">
-                                    <div className="h-10 w-10 bg-[#0F2137] text-white rounded-lg flex items-center justify-center text-xs font-bold uppercase italic">
-                                        C{i}
-                                    </div>
+                        {pendingInternships.length > 0 ? (
+                            pendingInternships.slice(0, 5).map(internship => (
+                                <div key={internship.id} className="flex justify-between items-center p-3 bg-slate-50 rounded-lg">
                                     <div>
-                                        <p className="text-sm font-bold text-slate-800 leading-none">Venture Soft {i}</p>
-                                        <p className="text-[10px] font-bold text-slate-400 mt-1 uppercase">Applied 2h ago</p>
+                                        <p className="font-bold text-sm text-[#0F2137]">{internship.title}</p>
+                                        <p className="text-xs text-slate-500">{internship.department.name}</p>
                                     </div>
+                                    <span className="text-xs font-bold text-amber-500 bg-amber-50 px-2 py-1 rounded">Pending</span>
                                 </div>
-                                <Button variant="ghost" size="sm" className="w-auto h-8 px-3 text-[#3B82F6]">REVIEW</Button>
-                            </div>
-                        ))}
+                            ))
+                        ) : (
+                            <p className="text-sm text-slate-500 text-center py-4">No pending requests</p>
+                        )}
                     </div>
                 </div>
 
@@ -157,30 +103,6 @@ const ICDashboard = () => {
                     </div>
                 </div>
             </div>
-
-            <Modal
-                isOpen={isSessionModalOpen}
-                onClose={() => setIsSessionModalOpen(false)}
-                title="Open New Internship Session"
-                maxWidth="max-w-2xl"
-            >
-                <SessionForm
-                    onSubmit={handleCreateSession}
-                    onCancel={() => setIsSessionModalOpen(false)}
-                />
-            </Modal>
-
-            <Modal
-                isOpen={isRecruiterModalOpen}
-                onClose={() => setIsRecruiterModalOpen(false)}
-                title="Add New Corporate Partner"
-                maxWidth="max-w-2xl"
-            >
-                <RecruiterForm
-                    onSubmit={handleAddCorporate}
-                    onCancel={() => setIsRecruiterModalOpen(false)}
-                />
-            </Modal>
         </div>
     );
 };

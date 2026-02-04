@@ -1,112 +1,158 @@
+
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Briefcase, Users, MessageSquare, PlusCircle, Search, Calendar, ArrowRight } from 'lucide-react';
+import { Briefcase, Users, MessageSquare, PlusCircle, Search, User, Edit, Eye } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import Button from '../../components/ui/Button';
-import DashboardFilters from '../../components/ui/DashboardFilters';
 import RecruiterStatsChart from '../../components/charts/RecruiterStatsChart';
-import { SessionService } from '../../services/mock/SessionService';
+import { InternshipService } from '../../services/internship.service';
+import type { Internship } from '../../types';
+import { useNotifications } from '../../context/NotificationContext';
 
 const RecruiterDashboard = () => {
     const navigate = useNavigate();
-    const [sessions, setSessions] = useState<any[]>([]);
+    const [myInternships, setMyInternships] = useState<Internship[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [year, setYear] = useState('2024-2025');
-    const [batch, setBatch] = useState('All Batches');
 
     useEffect(() => {
-        loadSessions();
+        loadInternships();
     }, []);
 
-    const loadSessions = async () => {
+    const loadInternships = async () => {
         try {
-            const data = await SessionService.getAll();
-            // Filter to show only active sessions to recruiters
-            setSessions(data.filter(s => s.isActive) || []);
+            const data = await InternshipService.getMyInternships();
+            setMyInternships(data || []);
         } catch (error) {
-            console.error("Failed to fetch sessions", error);
+            console.error("Failed to fetch internships", error);
         } finally {
             setIsLoading(false);
         }
     };
 
-    const chartData = [
-        { name: 'Week 1', applications: 12, views: 45 },
-        { name: 'Week 2', applications: 19, views: 55 },
-        { name: 'Week 3', applications: 35, views: 90 },
-        { name: 'Week 4', applications: 28, views: 75 },
-    ];
+    const [previewJob, setPreviewJob] = useState<Internship | null>(null);
+    const { addNotification } = useNotifications(); // Assuming this hook is available globally or imported
+
+    // ... existing loadInternships ...
+
+    const handleStatusToggle = async (id: string, currentStatus: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        // Toggle logic: If ACTIVE -> CLOSED, if CLOSED -> ACTIVE (assuming backend supports it or we just label it)
+        // Since we don't have a direct 'active' boolean in type, let's assume 'status' field usage or a new field.
+        // For now, let's assume we can 'close' an internship.
+        if (currentStatus === 'CLOSED') return; // Can't reopen?
+
+        try {
+            await InternshipService.close(id);
+            addNotification({ title: 'Status Updated', message: 'Internship closed successfully', type: 'success' });
+            loadInternships();
+        } catch (error) {
+            console.error("Failed to update status", error);
+            addNotification({ title: 'Error', message: 'Failed to update status', type: 'error' });
+        }
+    };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
+        <div className="space-y-8 animate-in fade-in duration-500 relative">
+            {/* ... Header and Filters ... */}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-[#0F2137]">Corporate Recruiter Portal</h1>
                     <p className="text-slate-500 text-sm font-medium mt-1">Post opportunities and manage CHRIST University talent applications.</p>
                 </div>
-                <Button
-                    variant="secondary"
-                    className="w-auto gap-2 bg-[#3B82F6] text-white hover:bg-blue-600 shadow-md hover:shadow-lg transition-all"
-                    onClick={() => navigate('/jobs/new')}
-                >
-                    <PlusCircle size={18} /> NEW POSTING
-                </Button>
+                <div className="flex gap-3">
+                    <Button
+                        variant="outline"
+                        className="w-auto gap-2 border-[#0F2137] text-[#0F2137] hover:bg-slate-50"
+                        onClick={() => navigate('/recruiters/profile')}
+                    >
+                        <User size={18} /> View Profile
+                    </Button>
+                    <Button
+                        variant="secondary"
+                        className="w-auto gap-2 bg-[#3B82F6] text-white hover:bg-blue-600 shadow-md hover:shadow-lg transition-all"
+                        onClick={() => navigate('/jobs/new')}
+                    >
+                        <PlusCircle size={18} /> POST NEW JOB
+                    </Button>
+                </div>
             </div>
 
-            <DashboardFilters
-                years={[{ label: '2024-2025', value: '2024-2025' }, { label: '2023-2024', value: '2023-2024' }]}
-                batches={[{ label: 'All Batches', value: 'All Batches' }, { label: 'MCA', value: 'MCA' }, { label: 'MBA', value: 'MBA' }]}
-                selectedYear={year}
-                selectedBatch={batch}
-                onYearChange={setYear}
-                onBatchChange={setBatch}
-            />
+            {/* Dashboard Headers removed filters */}
 
+            {/* Stats Grid */}
+
+            {/* Stats Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatCard label="Active Postings" value={sessions.length.toString().padStart(2, '0')} icon={Briefcase} color="navy" />
-                    <StatCard label="New Applications" value="48" icon={Users} color="purple" trend="+12 today" trendUp />
-                    <StatCard label="Unread Queries" value="01" icon={MessageSquare} color="amber" />
+                    <StatCard label="My Postings" value={myInternships.length.toString()} icon={Briefcase} color="navy" />
+                    <StatCard label="Total Applications" value="--" icon={Users} color="purple" />
+                    <StatCard label="Unread Queries" value="0" icon={MessageSquare} color="amber" />
                 </div>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Chart Section */}
-                <RecruiterStatsChart data={chartData} />
+                <RecruiterStatsChart data={[]} />
 
-                {/* Active Recruitment Drives Section */}
+                {/* My Recent Postings */}
                 <div className="space-y-4">
-                    <h2 className="text-lg font-bold text-[#0F2137]">Active Recruitment Drives</h2>
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-lg font-bold text-[#0F2137]">My Postings</h2>
+                        <Button variant="ghost" size="sm" onClick={() => navigate('/jobs')} className="text-xs">View All</Button>
+                    </div>
 
                     {isLoading ? (
                         <div className="p-12 text-center border border-dashed border-slate-300 rounded-xl">
-                            <p className="text-slate-400">Loading sessions...</p>
+                            <p className="text-slate-400">Loading postings...</p>
                         </div>
-                    ) : sessions.length > 0 ? (
-                        <div className="grid grid-cols-1 gap-4 max-h-[300px] overflow-y-auto">
-                            {sessions.map((session: any) => (
-                                <div key={session.id || session._id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                    ) : myInternships.length > 0 ? (
+                        <div className="grid grid-cols-1 gap-4 max-h-[400px] overflow-y-auto pr-2">
+                            {myInternships.slice(0, 10).map((internship) => (
+                                <div key={internship.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow group">
                                     <div className="flex justify-between items-start mb-3">
                                         <div className="p-2 bg-blue-50 text-blue-600 rounded-lg">
-                                            <Calendar size={20} />
+                                            <Briefcase size={20} />
                                         </div>
-                                        <span className="text-xs font-bold px-2 py-1 bg-green-100 text-green-700 rounded-full">Active</span>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => setPreviewJob(internship)}
+                                                className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                title="Preview Posting"
+                                            >
+                                                <Eye size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => navigate(`/jobs/${internship.id}/edit`)}
+                                                className="p-1.5 text-slate-400 hover:text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+                                                title="Edit Posting"
+                                            >
+                                                <Edit size={16} />
+                                            </button>
+                                        </div>
                                     </div>
-                                    <h3 className="font-bold text-[#0F2137] text-lg mb-1">{session.program || 'General Internship'} - {session.academicYear}</h3>
-                                    <p className="text-slate-500 text-sm mb-4">Batch: {session.batch}</p>
-
-                                    <div className="flex items-center text-xs text-slate-400 mb-4 gap-4">
-                                        <span>Start: {new Date(session.startDate).toLocaleDateString()}</span>
-                                        <span>End: {new Date(session.endDate).toLocaleDateString()}</span>
+                                    <div className="mb-2 flex items-center justify-between">
+                                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${internship.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
+                                            internship.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
+                                                'bg-amber-100 text-amber-700'
+                                            }`}>
+                                            {internship.status}
+                                        </span>
+                                        {/* Status Toggle Button if needed */}
+                                        <button
+                                            onClick={(e) => handleStatusToggle(internship.id, internship.status, e)}
+                                            className="text-[10px] underline text-slate-400 hover:text-red-500"
+                                        >
+                                            {internship.status === 'CLOSED' ? 'Closed' : 'Close Job'}
+                                        </button>
                                     </div>
-
-                                    <Button
-                                        variant="outline"
-                                        className="w-full justify-between group hover:border-[#0F2137] hover:text-[#0F2137]"
-                                        onClick={() => navigate('/jobs')}
-                                    >
-                                        View Opportunities <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-                                    </Button>
+                                    <h3 className="font-bold text-[#0F2137] text-lg mb-1">{internship.title}</h3>
+                                    <p className="text-slate-500 text-xs mb-3 line-clamp-2">{internship.description}</p>
+                                    <div className="pt-3 border-t border-slate-100 flex justify-between items-center text-xs text-slate-500">
+                                        <span>Posted: {new Date(internship.created_at).toLocaleDateString()}</span>
+                                        <span className="font-semibold text-blue-600 cursor-pointer hover:underline" onClick={() => navigate(`/jobs/${internship.id}/applications`)}>
+                                            See Applications →
+                                        </span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -115,14 +161,60 @@ const RecruiterDashboard = () => {
                             <div className="bg-slate-50 p-4 rounded-full mb-4">
                                 <Search className="text-slate-300 h-8 w-8" />
                             </div>
-                            <h3 className="text-base font-bold text-[#0F2137] mb-1">No active drives</h3>
-                            <p className="text-slate-500 text-xs max-w-sm mx-auto">
-                                There are currently no active internship sessions.
+                            <h3 className="text-base font-bold text-[#0F2137] mb-1">No postings yet</h3>
+                            <p className="text-slate-500 text-xs max-w-sm mx-auto mb-4">
+                                You haven't created any internship postings yet.
                             </p>
+                            <Button size="sm" onClick={() => navigate('/jobs/new')}>Create First Posting</Button>
                         </div>
                     )}
                 </div>
             </div>
+
+            {/* Preview Modal */}
+            {previewJob && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-white rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+                        <div className="p-6 border-b sticky top-0 bg-white z-10 flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-[#0F2137]">Job Preview</h2>
+                            <button onClick={() => setPreviewJob(null)} className="text-slate-400 hover:text-slate-600 font-bold text-xl">&times;</button>
+                        </div>
+                        <div className="p-6 space-y-6">
+                            <div>
+                                <h3 className="text-2xl font-bold text-[#0F2137] mb-2">{previewJob.title}</h3>
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                    <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-bold uppercase">{previewJob.location_type || 'REMOTE'}</span>
+                                    <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-xs font-bold uppercase">{previewJob.is_paid ? 'Paid' : 'Unpaid'}</span>
+                                    {previewJob.stipend && <span className="px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-xs font-bold">₹{previewJob.stipend}/mo</span>}
+                                </div>
+                            </div>
+
+                            <div>
+                                <h4 className="font-bold text-[#0F2137] mb-2">Description</h4>
+                                <p className="text-slate-600 text-sm whitespace-pre-wrap leading-relaxed">{previewJob.description}</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <h4 className="font-bold text-[#0F2137] mb-1">Duration</h4>
+                                    <p className="text-slate-600 text-sm">{previewJob.duration}</p>
+                                </div>
+                                <div>
+                                    <h4 className="font-bold text-[#0F2137] mb-1">Posted Date</h4>
+                                    <p className="text-slate-600 text-sm">{new Date(previewJob.created_at).toLocaleDateString()}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="p-6 border-t bg-slate-50 flex justify-end gap-3">
+                            <Button variant="outline" onClick={() => setPreviewJob(null)}>Close</Button>
+                            <Button onClick={() => {
+                                setPreviewJob(null);
+                                navigate(`/jobs/${previewJob.id}/edit`);
+                            }}>Edit Posting</Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

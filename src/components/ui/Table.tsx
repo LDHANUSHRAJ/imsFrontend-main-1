@@ -47,8 +47,8 @@ export const TableRow = ({ children, className, onClick }: { children: React.Rea
     </tr>
 );
 
-export const TableCell = ({ children, className }: { children: React.ReactNode; className?: string }) => (
-    <td className={cn("whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-slate-700", className)}>
+export const TableCell = ({ children, className, colSpan }: { children: React.ReactNode; className?: string; colSpan?: number }) => (
+    <td colSpan={colSpan} className={cn("whitespace-nowrap py-4 pl-6 pr-3 text-sm font-medium text-slate-700", className)}>
         {children}
     </td>
 );

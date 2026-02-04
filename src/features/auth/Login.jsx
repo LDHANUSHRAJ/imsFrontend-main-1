@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 // import logo from "../../assets/logo/christ-logo.png"; // Removed in favor of public folder
 import { roleRedirect } from "../../utils/roleRedirect";
 import { useAuth } from "../../context/AuthContext";
-import { loginUser } from "../../services/auth.service";
+import { useNotifications } from "../../context/NotificationContext"; // Import hook
+import { AuthService } from "../../services/auth.service";
 
 export default function Login() {
     const [type, setType] = useState(null);
@@ -12,6 +13,7 @@ export default function Login() {
     const [loading, setLoading] = useState(false);
 
     const { login } = useAuth();
+    const { addNotification } = useNotifications(); // Get addNotification
     const navigate = useNavigate();
 
     const handleChange = (e) => {
@@ -28,13 +30,19 @@ export default function Login() {
         setLoading(true);
 
         try {
-            const data = await loginUser({
-                email: formData.email,
-                password: formData.password,
-                role: type
+            const data = await AuthService.login({
+                username: formData.email,
+                password: formData.password
             });
 
             login(data);
+
+            addNotification({
+                title: "Login Successful",
+                message: `Welcome back! Logged in as ${data.user?.role || "User"}.`,
+                type: "success",
+                category: "SYSTEM"
+            });
 
             // Determine role from response or fallback to selected type
             const role = data.user?.role || data.role || type;
