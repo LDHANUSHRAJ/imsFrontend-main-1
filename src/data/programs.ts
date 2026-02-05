@@ -112,7 +112,7 @@ export const PROGRAMS: ProgramCategory[] = [
         subprograms: [
             "MBA (General)",
             "MBA (Executive)",
-            "MBA + Dual Degrees"
+            "MBA + Dual Degrees with partner universities (Germany/USA)"
         ]
     },
     {

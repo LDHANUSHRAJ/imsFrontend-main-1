@@ -101,3 +101,17 @@ export interface AdminUserCreate {
     hr_name?: string | null;
     department_id?: string | null;
 }
+
+export interface InternshipSession {
+    id: string;
+    academicYear: string;
+    program: string;
+    subProgram?: string;
+    batch: string;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+    mode?: 'ONSITE' | 'REMOTE' | 'HYBRID';
+    duration?: string;
+    stipend?: string;
+}

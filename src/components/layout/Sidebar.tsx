@@ -21,7 +21,7 @@ export default function Sidebar({ role }: SidebarProps) {
       {/* LOGO */}
       <div className="p-6 border-b border-white/20">
         <img src="/christ-logo.png" alt="Christ University" className="w-36 mb-2" />
-        <p className="text-xs opacity-80">IMS Admin Portal</p>
+        <p className="text-xs opacity-80">INTERNSHIPS</p>
       </div>
 
       {/* MENU */}

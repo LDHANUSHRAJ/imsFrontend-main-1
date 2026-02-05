@@ -15,7 +15,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }: Moda
 
     return (
         <div className="fixed inset-0 z-[100] overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
-            <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:p-0">
+            <div className="flex min-h-full items-center justify-center p-4 text-center sm:p-0">
                 {/* Backdrop with Christ Navy tint */}
                 <div
                     className="fixed inset-0 bg-[#0F2137]/60 backdrop-blur-sm transition-opacity"
@@ -24,7 +24,7 @@ const Modal = ({ isOpen, onClose, title, children, maxWidth = 'max-w-lg' }: Moda
                 ></div>
 
                 <div className={cn(
-                    "inline-block align-middle bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 w-full animate-in fade-in zoom-in duration-300",
+                    "relative flex flex-col w-full bg-white rounded-2xl text-left overflow-hidden shadow-2xl transform transition-all sm:my-8 animate-in fade-in zoom-in duration-300",
                     maxWidth
                 )}>
                     <div className="bg-white px-6 pt-6 pb-6">

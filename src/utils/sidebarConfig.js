@@ -19,7 +19,6 @@ export const sidebarConfig = {
         { label: "Dashboard", path: "/faculty/dashboard" },
         { label: "Assigned Students", path: "/faculty/students" },
         { label: "Student Logs", path: "/faculty/logs" },
-        { label: "Closure Review", path: "/faculty/closure" },
         { label: "Reports", path: "/reports" },
     ],
 

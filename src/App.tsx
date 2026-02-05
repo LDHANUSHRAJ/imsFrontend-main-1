@@ -28,6 +28,8 @@ import JobForm from './pages/jobs/JobForm';
 import ApplicationList from './pages/applications/ApplicationList';
 import ApplicationDetail from './pages/applications/ApplicationDetail';
 import GuideAssignment from './pages/guides/GuideAssignment';
+
+import PlacementProfile from './pages/profiles/PlacementProfile';
 import ClosureEvaluation from './pages/closure/ClosureEvaluation';
 import NotFound from './pages/NotFound';
 import ErrorBoundary from './components/ui/ErrorBoundary';
@@ -58,7 +60,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           { icon: Briefcase, label: 'Job Postings', path: '/jobs' },
           { icon: FileText, label: 'Applications', path: '/applications' },
           { icon: UserCheck, label: 'Guide Assignment', path: '/guides' },
-          { icon: Award, label: 'Closure & Evaluation', path: '/closure' },
         ];
       case 'HOD':
         return [
@@ -66,14 +67,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           { icon: Briefcase, label: 'Job Postings', path: '/jobs' },
           { icon: FileText, label: 'Applications', path: '/applications' },
           { icon: UserCheck, label: 'Guide Assignment', path: '/guides' },
-          { icon: Award, label: 'Closure & Evaluation', path: '/closure' },
         ];
       case 'FACULTY':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
           { icon: FileText, label: 'Applications', path: '/applications' },
           { icon: UserCheck, label: 'Guide Assignment', path: '/guides' },
-          { icon: Award, label: 'Evaluations', path: '/closure' },
         ];
       case 'RECRUITER':
         return [
@@ -129,15 +128,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </nav>
         </div>
         <div className="p-4 border-t border-gray-700 bg-[#0A1A2F]">
-          <div className="flex items-center gap-3 px-4 py-3 mb-2 text-base text-gray-400">
-            <div className="w-10 h-10 rounded-full bg-[#1E3A5F] flex items-center justify-center text-[#D4AF37] font-bold text-lg">
+          <Link to="/profile" className="flex items-center gap-3 px-4 py-3 mb-2 text-base text-gray-400 hover:bg-[#1E3A5F] rounded-lg transition-colors cursor-pointer group">
+            <div className="w-10 h-10 rounded-full bg-[#1E3A5F] flex items-center justify-center text-[#D4AF37] font-bold text-lg group-hover:bg-[#0F2540] transition-colors border-2 border-transparent group-hover:border-[#D4AF37]">
               {user?.name?.charAt(0) || 'U'}
             </div>
             <div className="overflow-hidden">
-              <p className="truncate font-bold text-lg text-white">{user?.name || 'User'}</p>
-              <p className="truncate text-sm text-gray-300">{user?.email}</p>
+              <p className="truncate font-bold text-lg text-white group-hover:text-[#D4AF37] transition-colors">{user?.name || 'User'}</p>
+              <p className="truncate text-sm text-gray-300">View Profile</p>
             </div>
-          </div>
+          </Link>
           <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 w-full rounded-lg transition-colors text-base font-medium">
             <LogOut size={20} />
             <span>Sign Out</span>
@@ -190,6 +189,7 @@ const App = () => {
                   <Route path="/applications/:id" element={<ApplicationDetail />} />
 
                   <Route path="/guides" element={<GuideAssignment />} />
+                  <Route path="/profile" element={<PlacementProfile />} />
                   <Route path="/closure" element={<ClosureEvaluation />} />
                 </Route>
 

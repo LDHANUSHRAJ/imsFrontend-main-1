@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
+import { RecruiterService } from '../services/mock/RecruiterService';
 import { useAuth } from '../context/AuthContext';
 import { useNotifications } from '../context/NotificationContext';
 import { Building2, User, Mail, Globe, MapPin, Linkedin, Hash } from 'lucide-react';
@@ -55,8 +56,17 @@ const RegistrationPage = () => {
                 hr_name: formData.hrName
             };
 
-            // 2. Register
+            // 2. Register via Auth Service (validates logic/backend)
             await AuthService.registerCorporate(apiPayload);
+
+            // 2b. Sync with Mock Recruiter Service (so Admin sees it immediately)
+            await RecruiterService.create({
+                companyName: formData.companyName,
+                name: formData.hrName,
+                email: formData.hrEmail,
+                industry: formData.industry,
+                address: formData.registeredAddress || 'Not Provided',
+            });
 
             // 3. Auto Login
             // This returns the auth data (token, etc.) immediately

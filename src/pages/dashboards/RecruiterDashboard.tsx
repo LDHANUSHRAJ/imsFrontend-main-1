@@ -8,15 +8,30 @@ import RecruiterStatsChart from '../../components/charts/RecruiterStatsChart';
 import { InternshipService } from '../../services/internship.service';
 import type { Internship } from '../../types';
 import { useNotifications } from '../../context/NotificationContext';
+import { useAuth } from '../../context/AuthContext';
+import { RecruiterService } from '../../services/mock/RecruiterService';
+import { Lock } from 'lucide-react';
 
 const RecruiterDashboard = () => {
     const navigate = useNavigate();
+    const { user } = useAuth();
     const [myInternships, setMyInternships] = useState<Internship[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isBanned, setIsBanned] = useState(false);
 
     useEffect(() => {
+        const checkBanStatus = async () => {
+            if (user?.email) {
+                const recruiters = await RecruiterService.getAll();
+                const me = recruiters.find((r: any) => r.email === user.email);
+                if (me && !me.isActive) {
+                    setIsBanned(true);
+                }
+            }
+        };
+        checkBanStatus();
         loadInternships();
-    }, []);
+    }, [user]);
 
     const loadInternships = async () => {
         try {
@@ -50,6 +65,27 @@ const RecruiterDashboard = () => {
             addNotification({ title: 'Error', message: 'Failed to update status', type: 'error' });
         }
     };
+
+    if (isBanned) {
+        return (
+            <div className="min-h-[80vh] flex flex-col items-center justify-center text-center animate-in fade-in duration-500">
+                <div className="bg-red-50 p-6 rounded-full mb-6">
+                    <Lock className="h-16 w-16 text-red-600" />
+                </div>
+                <h1 className="text-3xl font-bold text-[#0F2137] mb-4">YOU ARE RESTRICTED</h1>
+                <p className="text-slate-500 max-w-md mx-auto text-lg leading-relaxed mb-8">
+                    You are no longer linked to Christ University. Your access to the recruitment portal has been suspended.
+                </p>
+                <div className="bg-slate-50 border border-slate-200 p-6 rounded-xl max-w-lg w-full">
+                    <h3 className="font-bold text-[#0F2137] mb-2">Need Help?</h3>
+                    <p className="text-slate-600 mb-4">Please contact the Placement Office for further assistance regarding your account status.</p>
+                    <a href="mailto:placement@christuniversity.in" className="text-blue-600 font-bold hover:underline">
+                        placement@christuniversity.in
+                    </a>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500 relative">
