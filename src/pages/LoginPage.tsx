@@ -35,7 +35,9 @@ const LoginPage = () => {
                 {/* Header */}
                 <div className="text-center mb-8">
                     <div className="flex justify-center mb-6">
-                        <img src="/christ-logo.png" alt="Christ University Logo" className="h-24 w-auto object-contain drop-shadow-md" />
+                        <div className="h-40 w-40 rounded-full overflow-hidden flex items-center justify-center">
+                            <img src="/christ-logo.png" alt="Christ University Logo" className="h-full w-full object-contain" />
+                        </div>
                     </div>
                     <h1 className="text-3xl font-bold text-[#0F2137] tracking-tight">
                         IMS Portal
@@ -64,7 +66,7 @@ const LoginPage = () => {
                             >
                                 <option value="FACULTY">Faculty Guide / Mentor</option>
                                 <option value="HOD">Head of Department (HOD)</option>
-                                <option value="IC">Internship Coordinator</option>
+                                <option value="IC">Internships</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                 <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

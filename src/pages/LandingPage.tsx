@@ -13,7 +13,7 @@ const LandingPage = () => {
 
                     {/* Logo */}
                     <div className="flex justify-center mb-8">
-                        <div className="h-56 w-56 bg-white rounded-full flex items-center justify-center shadow-2xl p-6 hover:scale-105 transition-transform duration-300">
+                        <div className="h-56 w-56 bg-white rounded-full flex items-center justify-center hover:scale-105 transition-transform duration-300 overflow-hidden">
                             <img
                                 src="/christ-logo.png"
                                 alt="Christ University Logo"
