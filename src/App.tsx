@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Calendar, Award } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Calendar } from 'lucide-react';
 
 // Providers - MUST be at the top
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -28,6 +28,8 @@ import JobForm from './pages/jobs/JobForm';
 import ApplicationList from './pages/applications/ApplicationList';
 import ApplicationDetail from './pages/applications/ApplicationDetail';
 import GuideAssignment from './pages/guides/GuideAssignment';
+import AssignedStudents from './pages/guides/AssignedStudents';
+import StudentDetailsPage from './pages/guides/StudentDetailsPage';
 
 import PlacementProfile from './pages/profiles/PlacementProfile';
 import ClosureEvaluation from './pages/closure/ClosureEvaluation';
@@ -71,8 +73,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       case 'FACULTY':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+          { icon: Users, label: 'Assigned Students', path: '/assigned-students' },
           { icon: FileText, label: 'Applications', path: '/applications' },
-          { icon: UserCheck, label: 'Guide Assignment', path: '/guides' },
+          { icon: UserCheck, label: 'Mentorship Allocations', path: '/guides' },
         ];
       case 'RECRUITER':
         return [
@@ -189,6 +192,8 @@ const App = () => {
                   <Route path="/applications/:id" element={<ApplicationDetail />} />
 
                   <Route path="/guides" element={<GuideAssignment />} />
+                  <Route path="/assigned-students" element={<AssignedStudents />} />
+                  <Route path="/guide/student/:id" element={<StudentDetailsPage />} />
                   <Route path="/profile" element={<PlacementProfile />} />
                   <Route path="/closure" element={<ClosureEvaluation />} />
                 </Route>

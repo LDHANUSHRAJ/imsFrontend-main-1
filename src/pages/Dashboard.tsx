@@ -2,7 +2,7 @@ import React from 'react';
 import { useAuth } from '../context/AuthContext';
 import ICDashboard from './dashboards/ICDashboard';
 // Assuming other dashboards are imported similarly
-import FacultyDashboard from './dashboards/FacultyDashboard';
+import GuideDashboard from './guides/GuideDashboard';
 import HODDashboard from './dashboards/HODDashboard';
 import RecruiterDashboard from './dashboards/RecruiterDashboard';
 import StudentDashboard from './dashboards/StudentDashboard';
@@ -19,7 +19,7 @@ const Dashboard = () => {
         case 'HOD':
             return <HODDashboard />;
         case 'FACULTY':
-            return <FacultyDashboard />;
+            return <GuideDashboard />;
         case 'RECRUITER':
             return <RecruiterDashboard />;
         case 'STUDENT':

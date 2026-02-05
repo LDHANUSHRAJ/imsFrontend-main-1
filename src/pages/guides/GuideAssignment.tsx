@@ -18,6 +18,7 @@ const GuideAssignment = () => {
     const [selectedAssignment, setSelectedAssignment] = useState<string | null>(null);
     const [guideName, setGuideName] = useState('');
     const [feedback, setFeedback] = useState('');
+    const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(null);
 
     useEffect(() => {
         loadAssignments();
@@ -54,17 +55,29 @@ const GuideAssignment = () => {
 
     const handleAddFeedback = async () => {
         if (selectedAssignment && feedback.trim()) {
-            await GuideService.addFeedback(selectedAssignment, feedback);
-
-            addNotification({
-                title: 'Feedback Submitted',
-                message: `Mentee feedback has been synced with the ERP / Viva API.`,
-                type: 'info',
-                category: 'LOG'
-            });
+            if (editingFeedbackId) {
+                // Edit Mode
+                await GuideService.updateFeedback(selectedAssignment, editingFeedbackId, feedback);
+                addNotification({
+                    title: 'Feedback Updated',
+                    message: `Feedback has been successfully updated.`,
+                    type: 'success',
+                    category: 'LOG'
+                });
+            } else {
+                // Create Mode
+                await GuideService.addFeedback(selectedAssignment, feedback);
+                addNotification({
+                    title: 'Feedback Submitted',
+                    message: `Mentee feedback has been synced with the ERP / Viva API.`,
+                    type: 'info',
+                    category: 'LOG'
+                });
+            }
 
             setShowFeedbackModal(false);
             setFeedback('');
+            setEditingFeedbackId(null);
             setSelectedAssignment(null);
             loadAssignments();
         }
@@ -155,12 +168,12 @@ const GuideAssignment = () => {
                                         >
                                             <MessageSquare size={14} className="mr-2" /> Add Feedback
                                         </Button>
-                                        {assignment.feedback.length > 0 && (
+                                        {assignment.feedback && assignment.feedback.length > 0 && (
                                             <Link
-                                                to={`/guides/${assignment.id}`}
+                                                to={`/guide/student/${assignment.id}`}
                                                 className="block text-center text-[10px] font-bold text-slate-400 hover:text-[#0F2137] uppercase tracking-tighter transition-colors"
                                             >
-                                                View Activity Logs ({assignment.feedback.length})
+                                                View Activity Logs
                                             </Link>
                                         )}
                                     </div>
@@ -226,21 +239,78 @@ const GuideAssignment = () => {
 
             <Modal
                 isOpen={showFeedbackModal}
-                onClose={() => setShowFeedbackModal(false)}
-                title="Add Progress Feedback"
-                maxWidth="max-w-md"
+                onClose={() => {
+                    setShowFeedbackModal(false);
+                    setEditingFeedbackId(null);
+                    setFeedback('');
+                }}
+                title="Mentorship Feedback & Monitoring"
+                maxWidth="max-w-xl"
             >
-                <div className="space-y-4">
-                    <p className="text-xs font-medium text-slate-500">Your feedback will be visible to the student and synced with the academic logs.</p>
-                    <textarea
-                        value={feedback}
-                        onChange={(e) => setFeedback(e.target.value)}
-                        className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#3B82F6]/20 min-h-[120px]"
-                        placeholder="Enter monitoring notes or feedback..."
-                    />
-                    <div className="flex gap-3">
-                        <Button variant="outline" className="flex-1" onClick={() => setShowFeedbackModal(false)}>Cancel</Button>
-                        <Button variant="primary" className="flex-1" onClick={handleAddFeedback} disabled={!feedback.trim()}>Submit Feedback</Button>
+                <div className="space-y-6">
+                    {/* Previous Feedback List */}
+                    <div className="bg-slate-50 rounded-xl p-4 border border-slate-100 max-h-60 overflow-y-auto space-y-3">
+                        <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Previous Feedback</h4>
+                        {assignments.find(a => a.id === selectedAssignment)?.feedback?.length === 0 ? (
+                            <p className="text-sm text-slate-400 italic text-center py-4">No feedback given yet.</p>
+                        ) : (
+                            assignments.find(a => a.id === selectedAssignment)?.feedback?.map((f) => (
+                                <div key={f.id} className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm relative group">
+                                    <div className="flex justify-between items-start mb-1">
+                                        <span className="text-xs font-bold text-[#0F2137]">{f.guideName || 'Guide'}</span>
+                                        <span className="text-[10px] text-slate-400">{f.date}</span>
+                                    </div>
+                                    <p className="text-sm text-slate-700">{f.message}</p>
+                                    <button
+                                        onClick={() => {
+                                            setFeedback(f.message);
+                                            setEditingFeedbackId(f.id);
+                                        }}
+                                        className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 text-xs text-blue-600 font-bold bg-blue-50 px-2 py-1 rounded transition-opacity"
+                                    >
+                                        Edit
+                                    </button>
+                                </div>
+                            ))
+                        )}
+                    </div>
+
+                    {/* Input Area */}
+                    <div className="space-y-2">
+                        <div className="flex justify-between items-center">
+                            <label className="text-sm font-medium text-slate-700">
+                                {editingFeedbackId ? "Edit Feedback" : "Add New Feedback"}
+                            </label>
+                            {editingFeedbackId && (
+                                <button
+                                    onClick={() => {
+                                        setEditingFeedbackId(null);
+                                        setFeedback('');
+                                    }}
+                                    className="text-xs text-slate-500 hover:text-red-500"
+                                >
+                                    Cancel Edit
+                                </button>
+                            )}
+                        </div>
+                        <textarea
+                            value={feedback}
+                            onChange={(e) => setFeedback(e.target.value)}
+                            className={`w-full bg-white border rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#3B82F6] outline-none min-h-[100px] ${editingFeedbackId ? 'border-blue-200 ring-1 ring-blue-100' : 'border-slate-200'}`}
+                            placeholder="Enter specific feedback for the student..."
+                        />
+                    </div>
+
+                    <div className="flex gap-3 pt-2">
+                        <Button variant="outline" className="flex-1" onClick={() => setShowFeedbackModal(false)}>Close</Button>
+                        <Button
+                            variant="primary"
+                            className="flex-1"
+                            onClick={handleAddFeedback}
+                            disabled={!feedback.trim()}
+                        >
+                            {editingFeedbackId ? "Update Feedback" : "Submit Feedback"}
+                        </Button>
                     </div>
                 </div>
             </Modal>

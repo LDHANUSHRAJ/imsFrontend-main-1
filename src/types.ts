@@ -115,3 +115,54 @@ export interface InternshipSession {
     duration?: string;
     stipend?: string;
 }
+
+export interface MonitoringFeedback {
+    id: string;
+    message: string;
+    date: string;
+    guideName?: string;
+}
+
+export interface GuideAssignment {
+    id: string;
+    studentName: string;
+    studentRegNo: string;
+    internshipTitle: string;
+    companyName: string;
+    status: string;
+    guide?: string;
+    feedback?: MonitoringFeedback[];
+}
+
+export interface WeeklyLog {
+    id: string;
+    weekNumber: number;
+    startDate: string;
+    endDate: string;
+    workSummary: string;
+    learningOutcomes: string;
+    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUBMITTED';
+    guideComments?: string;
+    attachments?: string[];
+    submissionDate: string;
+}
+
+export interface GuideFeedback {
+    attendanceRating: number;
+    technicalSkillsRating: number;
+    communicationRating: number;
+    punctualityRating: number;
+    performanceRating: number;
+    comments: string;
+    submittedDate: string;
+}
+
+export interface StudentProfileExtended extends GuideAssignment {
+    email: string;
+    phone?: string;
+    department: string;
+    startDate: string;
+    endDate: string;
+    logs: WeeklyLog[];
+    finalFeedback?: GuideFeedback;
+}
