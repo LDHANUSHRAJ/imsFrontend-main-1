@@ -4,86 +4,126 @@ import type { GuideAssignment, StudentProfileExtended, WeeklyLog, GuideFeedback 
 // Helper to simulate delay
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
+const STORAGE_KEY = 'ims_mock_guide_assignments';
+
+const DEFAULT_ASSIGNMENTS: GuideAssignment[] = [
+    {
+        id: '1',
+        studentName: "Ananya Rao",
+        studentRegNo: "2347112",
+        internshipTitle: "Full Stack Developer Intern",
+        companyName: "Infosys",
+        status: "IN_PROGRESS",
+        guide: "Dr. Prof. Guide",
+        feedback: []
+    },
+    {
+        id: '2',
+        studentName: "Rahul Mehta",
+        studentRegNo: "2347115",
+        internshipTitle: "Data Analyst Intern",
+        companyName: "Deloitte",
+        status: "CLOSURE_SUBMITTED",
+        guide: "Dr. Prof. Guide",
+        feedback: []
+    },
+    {
+        id: '3',
+        studentName: "Karthik N",
+        studentRegNo: "2347120",
+        internshipTitle: "Software Engineer Intern",
+        companyName: "Wipro",
+        status: "OVERDUE_LOGS",
+        guide: "Dr. Prof. Guide",
+        feedback: []
+    }
+];
+
+// Helper to get or initialize assignments
+const getStoredAssignments = (): GuideAssignment[] => {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (!stored) {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_ASSIGNMENTS));
+        return DEFAULT_ASSIGNMENTS;
+    }
+    return JSON.parse(stored);
+};
+
+// Helper to save assignments
+const saveAssignments = (assignments: GuideAssignment[]) => {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(assignments));
+};
+
 export const GuideService = {
     getAll: async (): Promise<GuideAssignment[]> => {
-        // await new Promise(resolve => setTimeout(resolve, 600)); 
-        // Mock data usually returns fast, but consistent with other services:
         await delay(600);
-
-        // Mock response
-        return [
-            {
-                id: '1',
-                studentName: "Ananya Rao",
-                studentRegNo: "2347112",
-                internshipTitle: "Full Stack Developer Intern",
-                companyName: "Infosys",
-                status: "IN_PROGRESS",
-                guide: "Dr. Prof. Guide",
-                feedback: []
-            },
-            {
-                id: '2',
-                studentName: "Rahul Mehta",
-                studentRegNo: "2347115",
-                internshipTitle: "Data Analyst Intern",
-                companyName: "Deloitte",
-                status: "CLOSURE_SUBMITTED",
-                guide: "Dr. Prof. Guide",
-                feedback: []
-            },
-            {
-                id: '3',
-                studentName: "Karthik N",
-                studentRegNo: "2347120",
-                internshipTitle: "Software Engineer Intern",
-                companyName: "Wipro",
-                status: "OVERDUE_LOGS",
-                guide: "Dr. Prof. Guide",
-                feedback: []
-            }
-        ];
+        return getStoredAssignments();
     },
 
     assignGuide: async (id: string, guideName: string) => {
-        const response = await api.put(`/internships/${id}`, { guide: guideName });
-        return response.data;
+        await delay(500);
+        const assignments = getStoredAssignments();
+        const updated = assignments.map(a =>
+            a.id === id ? { ...a, guide: guideName, status: 'IN_PROGRESS' as const } : a
+        );
+        saveAssignments(updated);
+
+        // Also simulate API call if backend were real (optional, keeping for structure)
+        // const response = await api.put(`/internships/${id}`, { guide: guideName });
+        // return response.data;
+        return { success: true };
     },
 
     addFeedback: async (id: string, feedbackMsg: string) => {
-        const current = await api.get(`/internships/${id}`);
-        const currentFeedback = current.data.feedback || [];
-        const newFeedback = {
+        await delay(500);
+        const assignments = getStoredAssignments();
+        const newFeedbackEntry = {
             id: Date.now().toString(),
             message: feedbackMsg,
             date: new Date().toISOString().split('T')[0],
             guideName: 'Dr. Prof. Guide' // Mock
         };
-        const updatedFeedback = [...currentFeedback, newFeedback];
 
-        const response = await api.put(`/internships/${id}`, { feedback: updatedFeedback });
-        return response.data;
+        const updated = assignments.map(a => {
+            if (a.id === id) {
+                const currentFeedback = a.feedback || [];
+                return { ...a, feedback: [...currentFeedback, newFeedbackEntry] };
+            }
+            return a;
+        });
+
+        saveAssignments(updated);
+        return { success: true, data: newFeedbackEntry };
     },
 
     updateFeedback: async (internshipId: string, feedbackId: string, newMessage: string) => {
-        // Mock update behavior
-        const current = await api.get(`/internships/${internshipId}`);
-        const currentFeedback = current.data.feedback || [];
+        await delay(500);
+        const assignments = getStoredAssignments();
 
-        const updatedFeedback = currentFeedback.map((f: any) =>
-            f.id === feedbackId ? { ...f, message: newMessage } : f
-        );
+        const updated = assignments.map(a => {
+            if (a.id === internshipId && a.feedback) {
+                const updatedFeedbackList = a.feedback.map(f =>
+                    f.id === feedbackId ? { ...f, message: newMessage } : f
+                );
+                return { ...a, feedback: updatedFeedbackList };
+            }
+            return a;
+        });
 
-        const response = await api.put(`/internships/${internshipId}`, { feedback: updatedFeedback });
-        return response.data;
+        saveAssignments(updated);
+        return { success: true };
     },
 
     // --- New Methods for Enhanced Portal ---
 
     getStudentDetails: async (id: string): Promise<StudentProfileExtended> => {
         await delay(500);
-        // Mock data based on ID
-        return {
+        // Sync with local storage state for status consistency
+        const assignments = getStoredAssignments();
+        const assignment = assignments.find(a => a.id === id);
+
+        // Mock base data
+        const baseData = {
             id,
             studentName: id === '2' ? "Rahul Mehta" : "Ananya Rao",
             studentRegNo: id === '2' ? "2347115" : "2347112",
@@ -98,6 +138,17 @@ export const GuideService = {
             logs: [],
             feedback: []
         };
+
+        if (assignment) {
+            // Overlay stored data
+            return {
+                ...baseData,
+                status: assignment.status,
+                feedback: assignment.feedback || []
+            };
+        }
+
+        return baseData;
     },
 
     getStudentLogs: async (_studentId: string): Promise<WeeklyLog[]> => {
@@ -152,6 +203,14 @@ export const GuideService = {
     updateInternshipStatus: async (studentId: string, status: string, reason?: string) => {
         await delay(800);
         console.log(`Updated internship ${studentId} to ${status}. Reason: ${reason}`);
+
+        // Also update local storage
+        const assignments = getStoredAssignments();
+        const updated = assignments.map(a =>
+            a.id === studentId ? { ...a, status: status as any } : a
+        );
+        saveAssignments(updated);
+
         return { success: true, status };
     }
 };
