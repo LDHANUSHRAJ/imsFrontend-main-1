@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Calendar } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Calendar, Shield, CheckCircle } from 'lucide-react';
 
 // Providers - MUST be at the top
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -32,8 +32,11 @@ import AssignedStudents from './pages/guides/AssignedStudents';
 import StudentDetailsPage from './pages/guides/StudentDetailsPage';
 
 import PlacementProfile from './pages/profiles/PlacementProfile';
+import CompanyApproval from './pages/company/CompanyApproval';
 import ClosureEvaluation from './pages/closure/ClosureEvaluation';
+import CreditAuth from './pages/credit/CreditAuth';
 import NotFound from './pages/NotFound';
+import Unauthorized from './pages/Unauthorized';
 import ErrorBoundary from './components/ui/ErrorBoundary';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -58,10 +61,17 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
           { icon: Calendar, label: 'Sessions', path: '/sessions' },
-          { icon: Users, label: 'Recruiters', path: '/recruiters' },
           { icon: Briefcase, label: 'Job Postings', path: '/jobs' },
           { icon: FileText, label: 'Applications', path: '/applications' },
           { icon: UserCheck, label: 'Guide Assignment', path: '/guides' },
+        ];
+      case 'PLACEMENT_OFFICE':
+        return [
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+          { icon: Users, label: 'Recruiters', path: '/recruiters' },
+          { icon: FileText, label: 'Company Approval', path: '/company-approvals' },
+          { icon: CheckCircle, label: 'Credits Approval', path: '/credits-approval' },
+          { icon: Shield, label: 'Credit Auth', path: '/credit-auth' },
         ];
       case 'HOD':
         return [
@@ -113,7 +123,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
               {user?.role === 'RECRUITER' ? 'Recruiter Portal' :
                 user?.role === 'FACULTY' ? 'Faculty Portal' :
                   user?.role === 'HOD' ? 'HOD Portal' :
-                    'Admin Portal'}
+                    user?.role === 'PLACEMENT_OFFICE' ? 'Placement Office' :
+                      'Internships'}
             </p>
             <div className="mt-4">
               <NotificationDropdown />
@@ -178,8 +189,11 @@ const App = () => {
                     <Route path="/sessions" element={<SessionList />} />
                   </Route>
 
-                  <Route element={<RoleGuard allowedRoles={['IC']} />}>
+                  <Route element={<RoleGuard allowedRoles={['PLACEMENT_OFFICE']} />}>
                     <Route path="/recruiters" element={<RecruiterManagement />} />
+                    <Route path="/company-approvals" element={<CompanyApproval />} />
+                    <Route path="/credits-approval" element={<ClosureEvaluation />} />
+                    <Route path="/credit-auth" element={<CreditAuth />} />
                   </Route>
 
                   <Route path="/recruiters/profile" element={<RecruiterProfile />} />
@@ -199,6 +213,8 @@ const App = () => {
                 </Route>
 
 
+
+                <Route path="/unauthorized" element={<Unauthorized />} />
 
                 {/* Catch all */}
                 <Route path="*" element={<NotFound />} />

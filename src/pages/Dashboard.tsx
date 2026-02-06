@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { useAuth } from '../context/AuthContext';
 import ICDashboard from './dashboards/ICDashboard';
 // Assuming other dashboards are imported similarly
@@ -6,6 +6,8 @@ import GuideDashboard from './guides/GuideDashboard';
 import HODDashboard from './dashboards/HODDashboard';
 import RecruiterDashboard from './dashboards/RecruiterDashboard';
 import StudentDashboard from './dashboards/StudentDashboard';
+
+import PlacementOfficeDashboard from './dashboards/PlacementOfficeDashboard';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -16,6 +18,8 @@ const Dashboard = () => {
     switch (user.role) {
         case 'IC':
             return <ICDashboard />;
+        case 'PLACEMENT_OFFICE':
+            return <PlacementOfficeDashboard />;
         case 'HOD':
             return <HODDashboard />;
         case 'FACULTY':

@@ -85,6 +85,29 @@ const StudentDashboard = () => {
         return matchesSearch && matchesDept && matchesLocation && matchesPaid;
     });
 
+    // Credits / Internship Status
+    const [closureStatus, setClosureStatus] = useState<any>(null);
+
+    useEffect(() => {
+        fetchData();
+        fetchClosureStatus();
+    }, []);
+
+    const fetchClosureStatus = async () => {
+        try {
+            // Simulating fetching the logged-in student's closure record
+            // In a real app, this would be an API call like /student/me/closure
+            const { ClosureService } = await import('../../services/mock/ClosureService');
+            const allClosures = await ClosureService.getAll();
+            // Mock: Assume 1st record is the current student for demo
+            if (allClosures.length > 0) {
+                setClosureStatus(allClosures[1]); // Using 'Meera Reddy' (Active/Closed) or first one
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
     return (
         <div className="space-y-6 animate-in fade-in duration-500">
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
@@ -92,6 +115,19 @@ const StudentDashboard = () => {
                     <h1 className="text-2xl font-bold text-[#0F2137]">Student Dashboard</h1>
                     <p className="text-slate-500 text-sm font-medium mt-1">Explore and apply for latest internship opportunities.</p>
                 </div>
+
+                {/* Credit Status Card */}
+                {closureStatus && closureStatus.credits ? (
+                    <div className="bg-emerald-50 border border-emerald-200 px-4 py-2 rounded-xl flex items-center gap-3 shadow-sm">
+                        <div className="bg-white p-2 rounded-full">
+                            <span className="text-emerald-600 font-bold text-xl">🏆</span>
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold text-emerald-800 uppercase tracking-wider">Credits Awarded</p>
+                            <p className="text-emerald-900 font-bold text-lg">{closureStatus.credits} Academic Credits</p>
+                        </div>
+                    </div>
+                ) : null}
             </div>
 
             {/* Filters */}

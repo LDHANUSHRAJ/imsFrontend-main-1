@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ClosureService, type ClosureRecord } from '../../services/mock/ClosureService';
-import { 
-    FileCheck, Briefcase, User, UserCheck, 
-    Star, Download, ClipboardCheck, Award 
+import {
+    FileCheck, Briefcase, User, UserCheck,
+    Star, Download, ClipboardCheck, Award
 } from 'lucide-react';
 import Modal from '../../components/ui/Modal';
 import Badge from '../../components/ui/Badge';
@@ -16,6 +16,7 @@ const ClosureEvaluation = () => {
     const [showEvalModal, setShowEvalModal] = useState(false);
     const [selectedClosure, setSelectedClosure] = useState<ClosureRecord | null>(null);
     const [rating, setRating] = useState<number>(0);
+    const [credits, setCredits] = useState<number>(0); // Added state
     const [remarks, setRemarks] = useState('');
 
     useEffect(() => {
@@ -34,18 +35,19 @@ const ClosureEvaluation = () => {
     };
 
     const handleSubmitEvaluation = async () => {
-        if (selectedClosure && rating > 0 && remarks.trim()) {
-            await ClosureService.submitEvaluation(selectedClosure.id, rating, remarks);
-            
+        if (selectedClosure && credits > 0 && remarks.trim()) {
+            await ClosureService.submitEvaluation(selectedClosure.id, 5, remarks, credits);
+
             addNotification({
-                title: 'Evaluation Submitted',
-                message: `Final rating for ${selectedClosure.studentName} synced to ERP.`,
+                title: 'Credits Approved',
+                message: `${credits} Credits awarded to ${selectedClosure.studentName}.`,
                 type: 'success',
                 category: 'SYSTEM'
             });
 
             setShowEvalModal(false);
-            setRating(0);
+            setRating(0); // Resetting unused state
+            setCredits(0);
             setRemarks('');
             setSelectedClosure(null);
             loadClosures();
@@ -61,9 +63,9 @@ const ClosureEvaluation = () => {
     return (
         <div className="animate-in fade-in duration-500">
             <div className="mb-8">
-                <h1 className="text-2xl font-bold text-[#0F2137]">Closure & Final Evaluation</h1>
+                <h1 className="text-2xl font-bold text-[#0F2137]">Credits Approval</h1>
                 <p className="text-slate-500 text-sm font-medium mt-1">
-                    Part F: Guide review of closure reports, certificates, and attendance
+                    Review internship reports and final documents submitted by guides and students.
                 </p>
             </div>
 
@@ -99,10 +101,10 @@ const ClosureEvaluation = () => {
                                     </div>
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Company</label>
+                                    <label className="text-[10px] font-bold text-slate-400 uppercase">Duration</label>
                                     <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-700">
-                                        <User size={14} className="text-[#3B82F6]" />
-                                        <span className="truncate">{closure.companyName}</span>
+                                        <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                        <span className="truncate">{closure.duration}</span>
                                     </div>
                                 </div>
                             </div>
@@ -125,8 +127,8 @@ const ClosureEvaluation = () => {
                                     <div className="flex items-center gap-2 mb-2">
                                         <div className="flex">
                                             {[...Array(5)].map((_, i) => (
-                                                <Star key={i} size={12} fill={i < closure.evaluation!.rating ? "#EAB308" : "none"} 
-                                                      className={i < closure.evaluation!.rating ? "text-[#EAB308]" : "text-slate-300"} />
+                                                <Star key={i} size={12} fill={i < closure.evaluation!.rating ? "#EAB308" : "none"}
+                                                    className={i < closure.evaluation!.rating ? "text-[#EAB308]" : "text-slate-300"} />
                                             ))}
                                         </div>
                                         <span className="text-[10px] font-bold text-blue-700">FINAL EVALUATION</span>
@@ -139,16 +141,16 @@ const ClosureEvaluation = () => {
                         {/* Action Footer */}
                         {closure.status === 'PENDING_REVIEW' && (
                             <div className="p-4 bg-slate-50 border-t border-slate-100">
-                                <Button 
-                                    variant="primary" 
-                                    size="sm" 
+                                <Button
+                                    variant="primary"
+                                    size="sm"
                                     className="w-full font-bold"
                                     onClick={() => {
                                         setSelectedClosure(closure);
                                         setShowEvalModal(true);
                                     }}
                                 >
-                                    Grade Internship
+                                    Award Credits
                                 </Button>
                             </div>
                         )}
@@ -156,55 +158,66 @@ const ClosureEvaluation = () => {
                 ))}
             </div>
 
-            {/* Part F: Final Rating & Remarks Modal */}
+
+            {/* Credits Approval Modal */}
             <Modal
                 isOpen={showEvalModal}
                 onClose={() => setShowEvalModal(false)}
-                title={`Final Evaluation: ${selectedClosure?.studentName}`}
+                title={`Grant Credits: ${selectedClosure?.studentName}`}
                 maxWidth="max-w-md"
             >
                 <div className="space-y-6">
                     <div className="bg-slate-50 p-4 rounded-xl flex items-center gap-4">
                         <Award className="text-[#EAB308]" size={32} />
                         <div>
-                            <p className="text-[10px] font-bold text-slate-400 uppercase">Assessment Criteria</p>
-                            <p className="text-xs font-medium text-slate-600">Assign a final rating based on closure reports and performance metrics.</p>
+                            <p className="text-[10px] font-bold text-slate-400 uppercase">Credit Assignment</p>
+                            <p className="text-xs font-medium text-slate-600">Assign official academic credits based on internship performance.</p>
                         </div>
                     </div>
 
+                    {/* Duration Info */}
+                    <div className="bg-blue-50 border border-blue-100 p-3 rounded-lg flex justify-between items-center">
+                        <span className="text-xs font-bold text-blue-700">Internship Duration:</span>
+                        <span className="text-sm font-bold text-[#0F2137]">{selectedClosure?.duration || 'N/A'}</span>
+                    </div>
+
                     <div>
-                        <label className="block text-xs font-bold text-[#0F2137] uppercase tracking-wider mb-3">Final Rating</label>
-                        <div className="flex justify-between gap-2">
-                            {[1, 2, 3, 4, 5].map((r) => (
+                        <div className="flex justify-between items-end mb-3">
+                            <label className="text-xs font-bold text-[#0F2137] uppercase tracking-wider">Credits to Award</label>
+                            <span className="text-[10px] bg-slate-100 px-2 py-1 rounded text-slate-500 font-medium">
+                                Recommended: {selectedClosure?.duration?.toLowerCase().includes('6') ? '4' : '2'} Credits
+                            </span>
+                        </div>
+                        <div className="flex justify-center gap-4">
+                            {[2, 4].map((c) => (
                                 <button
-                                    key={r}
-                                    onClick={() => setRating(r)}
-                                    className={`flex-1 aspect-square rounded-xl border-2 font-bold text-lg transition-all active:scale-95 ${
-                                        rating === r 
-                                        ? 'bg-[#0F2137] border-[#0F2137] text-white shadow-lg shadow-blue-900/20' 
-                                        : 'border-slate-100 text-slate-400 hover:border-[#EAB308]'
-                                    }`}
+                                    key={c}
+                                    onClick={() => setCredits(c)}
+                                    className={`w-24 h-24 rounded-xl border-2 font-bold text-2xl transition-all active:scale-95 ${credits === c
+                                            ? 'bg-[#0F2137] border-[#0F2137] text-white shadow-lg shadow-blue-900/20'
+                                            : 'border-slate-200 text-slate-400 hover:border-[#EAB308]'
+                                        }`}
                                 >
-                                    {r}
+                                    {c}
                                 </button>
                             ))}
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-xs font-bold text-[#0F2137] uppercase tracking-wider mb-2">Evaluation Remarks</label>
+                        <label className="block text-xs font-bold text-[#0F2137] uppercase tracking-wider mb-2">Remarks</label>
                         <textarea
                             value={remarks}
                             onChange={(e) => setRemarks(e.target.value)}
                             className="w-full bg-slate-50 border-none rounded-xl p-4 text-sm focus:ring-2 focus:ring-[#3B82F6]/20 min-h-[120px]"
-                            placeholder="Provide feedback on reports, certificates, and overall attendance..."
+                            placeholder="Approval notes or feedback..."
                         />
                     </div>
 
                     <div className="flex gap-3 pt-2">
-                        <Button variant="outline" className="flex-1" onClick={() => setShowEvalModal(false)}>Discard</Button>
-                        <Button variant="primary" className="flex-1" onClick={handleSubmitEvaluation} disabled={rating === 0 || !remarks.trim()}>
-                            Submit Grade
+                        <Button variant="outline" className="flex-1" onClick={() => setShowEvalModal(false)}>Cancel</Button>
+                        <Button variant="primary" className="flex-1" onClick={handleSubmitEvaluation} disabled={credits === 0 || !remarks.trim()}>
+                            Grant Credits
                         </Button>
                     </div>
                 </div>

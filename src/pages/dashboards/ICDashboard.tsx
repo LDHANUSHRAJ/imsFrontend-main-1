@@ -1,8 +1,6 @@
-
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { useNotifications } from '../../context/NotificationContext';
-import { Users, Building2, Briefcase, Calendar, CheckCircle } from 'lucide-react';
+import { Users, Calendar, CheckCircle, Briefcase } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import PlacementStatsChart from '../../components/charts/PlacementStatsChart';
 import ApplicationsTrendChart from '../../components/charts/ApplicationsTrendChart';
@@ -13,7 +11,6 @@ import type { Internship } from '../../types';
 const ICDashboard = () => {
     const [stats, setStats] = useState<any>({});
     const [pendingInternships, setPendingInternships] = useState<Internship[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -31,13 +28,11 @@ const ICDashboard = () => {
                     ...statsData,
                     placementStats: analyticsData.placementStats,
                     applicationTrends: analyticsData.applicationTrends
-                } || {});
+                });
 
                 setPendingInternships(pendingData || []);
             } catch (error) {
                 console.error("Failed to fetch dashboard data", error);
-            } finally {
-                setIsLoading(false);
             }
         };
 
@@ -49,7 +44,7 @@ const ICDashboard = () => {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-[#0F2137]">INTERNSHIPS</h1>
-                    <p className="text-slate-500 text-sm font-medium mt-1">Manage corporate recruiter accounts and global internship sessions.</p>
+                    <p className="text-slate-500 text-sm font-medium mt-1">Manage global internship sessions and student approvals.</p>
                 </div>
                 <div className="flex gap-3">
                     <Link to="/profile" className="flex items-center gap-2 bg-white border border-slate-200 text-[#0F2137] px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-50 transition-colors shadow-sm">
@@ -61,7 +56,7 @@ const ICDashboard = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatCard label="Active Students" value={stats.activeStudents || '1,245'} icon={Users} color="navy" />
-                <StatCard label="Corporate Partners" value={stats.corporatePartners || '85'} icon={Building2} color="purple" />
+                <StatCard label="Placement Drives" value={stats.placementDrives || '24'} icon={Calendar} color="purple" />
                 <StatCard label="Open Vacancies" value={stats.openVacancies || '12'} icon={Briefcase} color="amber" />
                 <StatCard label="Pending Approvals" value={pendingInternships.length > 0 ? pendingInternships.length.toString() : '0'} icon={CheckCircle} color="green" />
             </div>

@@ -18,6 +18,26 @@ export function AuthProvider({ children }) {
         try {
             // Call Real Backend Login
             console.log("Attempting login to:", api.defaults.baseURL);
+
+            // --- DEVELOPER BYPASS START ---
+            const trimmedEmail = email.trim();
+            const trimmedPassword = password.trim();
+            if (trimmedEmail === "placement@christ.in" && trimmedPassword === "admin123") {
+                console.log("Using Developer Bypass for Placement Office");
+                const mockUser = {
+                    id: "mock-placement-id-001",
+                    access_token: "mock_token_placement_123",
+                    token_type: "bearer",
+                    role: "PLACEMENT_OFFICE",
+                    email: email,
+                    name: "Placement Officer (Dev)"
+                };
+                setUser(mockUser);
+                localStorage.setItem("imsUser", JSON.stringify(mockUser));
+                return mockUser;
+            }
+            // --- DEVELOPER BYPASS END ---
+
             const authResponse = await AuthService.login({
                 username: email,
                 password: password

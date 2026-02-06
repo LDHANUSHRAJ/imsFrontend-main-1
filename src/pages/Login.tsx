@@ -68,35 +68,20 @@ const RegistrationPage = () => {
                 address: formData.registeredAddress || 'Not Provided',
             });
 
-            // 3. Auto Login
-            // This returns the auth data (token, etc.) immediately
+            /* 
+            // 3. Auto Login REMOVED to enforce Approval Flow
             const authData = await login(formData.hrEmail, formData.password, 'RECRUITER');
+            */
 
-            // 4. Update Local Profile with extra fields (since backend didn't save them)
-            // We enable preservation of the fresh auth token by spreading authData
-            if (authData) {
-                updateUser({
-                    ...authData,
-                    company_type: formData.companyType,
-                    country: formData.country,
-                    industry: formData.industry,
-                    registered_address: formData.registeredAddress,
-                    registered_id: formData.registeredId,
-                    linkedin_url: formData.linkedinUrl,
-                    website_url: formData.websiteUrl,
-                    name: formData.hrName,
-                    company_name: formData.companyName
-                });
-            }
-
+            // Just navigate to login page with message
             addNotification({
-                title: 'Welcome Aboard!',
-                message: "Registration successful. You are now logged in.",
-                type: 'success',
+                title: 'Registration Successful',
+                message: "Your account is created and pending approval. You will be notified once the Placement Office approves it.",
+                type: 'success', // Using success, but could be 'info'
                 category: 'SYSTEM'
             });
 
-            navigate('/dashboard');
+            navigate('/login/recruiter');
 
         } catch (error: any) {
             console.error("Registration failed", error);

@@ -71,7 +71,7 @@ const PlacementProfile = () => {
                     <div>
                         <h2 className="text-xl font-bold text-[#0F2137]">{formData.name}</h2>
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                            Placement Coordinator
+                            Internships
                         </span>
                     </div>
                 </div>

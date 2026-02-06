@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { RecruiterService } from '../services/mock/RecruiterService';
 import { Mail, Lock, Building2, ArrowRight } from 'lucide-react';
 
 const RecruiterLoginPage = () => {
@@ -16,6 +17,19 @@ const RecruiterLoginPage = () => {
         setIsLoading(true);
         setError('');
         try {
+            // Check status in mock service (Simulating Backend Gate)
+            // This ensures only Approved/Active companies can login as requested
+            const recruiters = await RecruiterService.getAll();
+            const recruiter = recruiters.find((r: any) => r.email === email);
+
+            if (recruiter && !recruiter.isActive) {
+                if (recruiter.status === 'BANNED') {
+                    throw new Error("Access denied. Your account has been suspended.");
+                } else {
+                    throw new Error("Account pending approval. Please wait for the Placement Office to approve your request.");
+                }
+            }
+
             // Force strict Recruiter role
             await login(email, password, 'RECRUITER');
             navigate('/dashboard');

@@ -5,8 +5,11 @@ export interface ClosureRecord {
     studentRegNo: string;
     internshipTitle: string;
     companyName: string;
+    duration: string; // Added for Credit Calculation
     status: 'PENDING_REVIEW' | 'CLOSED';
+    displayId?: string; // e.g. "CMP-2024-001"
     documents: string[];
+    credits?: number; // Added for Credits Approval
     evaluation?: {
         rating: number;
         remarks: string;
@@ -20,6 +23,7 @@ const MOCK_CLOSURES: ClosureRecord[] = [
         studentRegNo: '21MCA001',
         internshipTitle: 'Frontend Developer',
         companyName: 'TechCorp Solutions',
+        duration: '6 Months',
         status: 'PENDING_REVIEW',
         documents: ['Internship_Completion_Certificate.pdf', 'Final_Report.pdf', 'Attendance_Log.pdf']
     },
@@ -29,8 +33,10 @@ const MOCK_CLOSURES: ClosureRecord[] = [
         studentRegNo: '21MCA004',
         internshipTitle: 'UI/UX Designer',
         companyName: 'Creative Minds',
+        duration: '3 Months',
         status: 'CLOSED',
         documents: ['Completion_Cert.pdf', 'Report.pdf'],
+        credits: 4, // Already awarded
         evaluation: {
             rating: 5,
             remarks: 'Exceptional performance throughout the internship. Highly recommended.'
@@ -43,13 +49,14 @@ export const ClosureService = {
         return new Promise((resolve) => setTimeout(() => resolve([...MOCK_CLOSURES]), 800));
     },
 
-    submitEvaluation: async (id: string, rating: number, remarks: string) => {
+    submitEvaluation: async (id: string, rating: number, remarks: string, credits: number) => {
         return new Promise((resolve) => {
             setTimeout(() => {
                 const closure = MOCK_CLOSURES.find(c => c.id === id);
                 if (closure) {
                     closure.status = 'CLOSED';
                     closure.evaluation = { rating, remarks };
+                    closure.credits = credits;
                 }
                 resolve(true);
             }, 600);
