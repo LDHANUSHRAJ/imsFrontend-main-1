@@ -36,8 +36,8 @@ const PlacementOfficeDashboard = () => {
     }, []);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div className="space-y-8 dashboard-enter">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 dashboard-header">
                 <div>
                     <h1 className="text-2xl font-bold text-[#0F2137]">PLACEMENT OFFICE</h1>
                     <p className="text-slate-500 text-sm font-medium mt-1">Institution-level governance and final approvals.</p>
@@ -45,13 +45,21 @@ const PlacementOfficeDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard label="Recruiters Managed" value={stats.corporatePartners || '85'} icon={Building2} color="purple" />
-                <StatCard label="Pending Startups" value={pendingStartups.length.toString()} icon={Users} color="orange" />
-                <StatCard label="In-Progress Closures" value={pendingInternships.length.toString()} icon={CheckCircle} color="blue" />
-                <StatCard label="Credit Requests" value="5" icon={Shield} color="green" />
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="Recruiters Managed" value={stats.corporatePartners || '85'} icon={Building2} color="purple" />
+                </div>
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="Pending Startups" value={pendingStartups.length.toString()} icon={Users} color="orange" />
+                </div>
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="In-Progress Closures" value={pendingInternships.length.toString()} icon={CheckCircle} color="blue" />
+                </div>
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="Credit Requests" value="5" icon={Shield} color="green" />
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 dashboard-table">
                 {/* Credits Approval Panel */}
                 <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-6 col-span-1 lg:col-span-2">
                     <div className="flex justify-between items-center mb-6">
@@ -102,7 +110,7 @@ const PlacementOfficeDashboard = () => {
             </div>
 
             {/* Credit Authorization Section */}
-            <div className="bg-[#0F2137] rounded-2xl p-6 text-white shadow-xl shadow-blue-900/20">
+            <div className="bg-[#0F2137] rounded-2xl p-6 text-white shadow-xl shadow-blue-900/20 welcome-banner">
                 <div className="flex justify-between items-center mb-4">
                     <div>
                         <h3 className="font-bold uppercase tracking-widest text-xs text-blue-400">Credit Authorization System</h3>

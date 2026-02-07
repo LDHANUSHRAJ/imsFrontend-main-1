@@ -179,5 +179,26 @@ export const RecruiterService = {
             password: `Pass@${recruiter.companyName.substring(0, 3)}123`,
             lastLogin: recruiter.lastLoginAt || 'Never'
         };
+    },
+
+    calculateTrustScore: (recruiter: any): number => {
+        let score = 50; // Base score
+
+        // 1. Email Domain check
+        const isOfficial = !recruiter.email.includes("gmail.com") &&
+            !recruiter.email.includes("outlook.com") &&
+            !recruiter.email.includes("yahoo.com");
+        if (isOfficial) score += 30;
+
+        // 2. Profile completeness (industry, address)
+        if (recruiter.industry) score += 10;
+        if (recruiter.address && recruiter.address.length > 20) score += 10;
+
+        // 3. Known big companies
+        const largeCompanies = ['google', 'microsoft', 'amazon', 'infosys', 'accenture'];
+        const isBig = largeCompanies.some(c => recruiter.companyName.toLowerCase().includes(c));
+        if (isBig) score = Math.min(score + 15, 100);
+
+        return Math.min(score, 100);
     }
 };

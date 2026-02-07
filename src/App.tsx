@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Calendar, Shield, CheckCircle } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Shield, CheckCircle, ChevronRight } from 'lucide-react';
 
 // Providers - MUST be at the top
 import { AuthProvider, useAuth } from './context/AuthContext';
@@ -17,10 +17,12 @@ import NotificationDropdown from './components/notifications/NotificationDropdow
 // Pages
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage'; // Staff Login
+import StudentLoginPage from './pages/StudentLoginPage'; // Dedicated Student Login
+import StudentRegisterPage from './pages/StudentRegisterPage'; // Student Register
 import RecruiterLoginPage from './pages/RecruiterLoginPage'; // Recruiter Login
 import Login from './pages/Login'; // Recruiter Registration
 import Dashboard from './pages/Dashboard';
-import SessionList from './pages/sessions/SessionList';
+
 import RecruiterManagement from './pages/recruiters/RecruiterManagement';
 import RecruiterProfile from './pages/recruiters/RecruiterProfile';
 import JobPostingList from './pages/jobs/JobPostingList';
@@ -30,6 +32,11 @@ import ApplicationDetail from './pages/applications/ApplicationDetail';
 import GuideAssignment from './pages/guides/GuideAssignment';
 import AssignedStudents from './pages/guides/AssignedStudents';
 import StudentDetailsPage from './pages/guides/StudentDetailsPage';
+import StudentApplications from './pages/applications/StudentApplications';
+import MyInternshipPortal from './pages/internship/MyInternshipPortal';
+import BrowseOffers from './pages/internship/BrowseOffers';
+import WeeklyLogModule from './pages/monitoring/WeeklyLogModule';
+import InternshipCompletionStatus from './pages/monitoring/InternshipCompletion';
 
 import PlacementProfile from './pages/profiles/PlacementProfile';
 import CompanyApproval from './pages/company/CompanyApproval';
@@ -60,7 +67,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       case 'IC':
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
-          { icon: Calendar, label: 'Sessions', path: '/sessions' },
           { icon: Briefcase, label: 'Job Postings', path: '/jobs' },
           { icon: FileText, label: 'Applications', path: '/applications' },
           { icon: UserCheck, label: 'Guide Assignment', path: '/guides' },
@@ -91,6 +97,15 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         return [
           { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
           { icon: Briefcase, label: 'My Postings', path: '/jobs' },
+          { icon: FileText, label: 'Applications', path: '/applications' },
+        ];
+      case 'STUDENT':
+        return [
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+          { icon: Briefcase, label: 'Explore offers', path: '/offers' },
+          { icon: FileText, label: 'My Trials', path: '/applications' },
+          { icon: CheckCircle, label: 'Weekly Journals', path: '/monitoring/logs' },
+          { icon: Shield, label: 'Milestone Hub', path: '/completion' },
         ];
       default:
         return [];
@@ -124,40 +139,65 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                 user?.role === 'FACULTY' ? 'Faculty Portal' :
                   user?.role === 'HOD' ? 'HOD Portal' :
                     user?.role === 'PLACEMENT_OFFICE' ? 'Placement Office' :
-                      'Internships'}
+                      user?.role === 'STUDENT' ? 'Student Portal' :
+                        'Internships'}
             </p>
             <div className="mt-4">
               <NotificationDropdown />
             </div>
           </div>
           <nav className="mt-6 px-4 space-y-2">
-            {navItems.map((item) => (
-              <Link key={item.path} to={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${location.pathname.startsWith(item.path) ? "bg-[#1E3A5F] text-white shadow-md border-l-4 border-[#D4AF37]" : "text-gray-300 hover:bg-[#1E3A5F] hover:text-white"
-                  }`}>
-                <item.icon size={20} />
-                <span>{item.label}</span>
+            {navItems.map((item, index) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                style={{ animationDelay: `${index * 0.05}s` }}
+                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 nav-item animate-slide-in-left ${location.pathname.startsWith(item.path)
+                  ? "bg-[#1E3A5F] text-white shadow-lg border-l-4 border-[#D4AF37]"
+                  : "text-gray-300 hover:bg-[#1E3A5F] hover:text-white"
+                  }`}
+              >
+                <item.icon size={20} className={location.pathname.startsWith(item.path) ? "text-[#D4AF37]" : "icon-hover"} />
+                <span className="font-bold text-sm">{item.label}</span>
               </Link>
             ))}
           </nav>
         </div>
         <div className="p-4 border-t border-gray-700 bg-[#0A1A2F]">
-          <Link to="/profile" className="flex items-center gap-3 px-4 py-3 mb-2 text-base text-gray-400 hover:bg-[#1E3A5F] rounded-lg transition-colors cursor-pointer group">
-            <div className="w-10 h-10 rounded-full bg-[#1E3A5F] flex items-center justify-center text-[#D4AF37] font-bold text-lg group-hover:bg-[#0F2540] transition-colors border-2 border-transparent group-hover:border-[#D4AF37]">
-              {user?.name?.charAt(0) || 'U'}
+          {user?.role === 'STUDENT' ? (
+            <div className="flex items-center justify-between p-2 rounded-xl hover:bg-[#1E3A5F] transition-all cursor-pointer group">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
+                  JD
+                </div>
+                <div className="overflow-hidden">
+                  <p className="truncate font-black text-sm text-white">{user?.name || 'John Doe'}</p>
+                  <p className="truncate text-[10px] font-bold text-slate-500 uppercase tracking-tighter">2247116</p>
+                </div>
+              </div>
+              <ChevronRight size={16} className="text-slate-500 group-hover:text-white transition-colors" />
             </div>
-            <div className="overflow-hidden">
-              <p className="truncate font-bold text-lg text-white group-hover:text-[#D4AF37] transition-colors">{user?.name || 'User'}</p>
-              <p className="truncate text-sm text-gray-300">View Profile</p>
-            </div>
-          </Link>
-          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 w-full rounded-lg transition-colors text-base font-medium">
+          ) : (
+            <Link
+              to="/profile"
+              className="flex items-center gap-3 px-4 py-3 mb-2 text-base text-gray-400 hover:bg-[#1E3A5F] rounded-lg transition-all cursor-pointer group nav-item"
+            >
+              <div className="w-10 h-10 rounded-full bg-[#1E3A5F] flex items-center justify-center text-[#D4AF37] font-bold text-lg group-hover:bg-[#0F2540] transition-all border-2 border-transparent group-hover:border-[#D4AF37] hover-scale">
+                {user?.name?.charAt(0) || 'U'}
+              </div>
+              <div className="overflow-hidden">
+                <p className="truncate font-bold text-lg text-white group-hover:text-[#D4AF37] transition-all">{user?.name || 'User'}</p>
+                <p className="truncate text-sm text-gray-300">View Profile</p>
+              </div>
+            </Link>
+          )}
+          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 w-full rounded-lg transition-colors text-base font-medium mt-2">
             <LogOut size={20} />
             <span>Sign Out</span>
           </button>
         </div>
       </aside>
-      <div className="ml-64 flex-1 p-8 overflow-y-auto h-screen">{children}</div>
+      <div className="ml-64 flex-1 p-8 overflow-y-auto h-screen page-enter">{children}</div>
     </div>
   );
 };
@@ -173,8 +213,10 @@ const App = () => {
                 {/* Public Routes */}
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/login/staff" element={<LoginPage />} />
+                <Route path="/login/student" element={<StudentLoginPage />} />
                 <Route path="/login/recruiter" element={<RecruiterLoginPage />} />
                 <Route path="/register" element={<Login />} />
+                <Route path="/register-student" element={<StudentRegisterPage />} />
 
                 {/* Legacy Routes redirecting to new structure */}
                 <Route path="/login" element={<Navigate to="/register" replace />} />
@@ -185,9 +227,7 @@ const App = () => {
                   {/* Dashboard redirects based on role via Dashboard component */}
                   <Route path="/dashboard" element={<Dashboard />} />
 
-                  <Route element={<RoleGuard allowedRoles={['IC', 'HOD']} />}>
-                    <Route path="/sessions" element={<SessionList />} />
-                  </Route>
+
 
                   <Route element={<RoleGuard allowedRoles={['PLACEMENT_OFFICE']} />}>
                     <Route path="/recruiters" element={<RecruiterManagement />} />
@@ -202,8 +242,22 @@ const App = () => {
                   <Route path="/jobs/new" element={<JobForm />} />
                   <Route path="/jobs/:id/edit" element={<JobForm />} />
 
-                  <Route path="/applications" element={<ApplicationList />} />
-                  <Route path="/applications/:id" element={<ApplicationDetail />} />
+                  <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
+                    <Route path="/applications" element={<StudentApplications />} />
+                    <Route path="/my-internship" element={<MyInternshipPortal />} />
+                    <Route path="/offers" element={<BrowseOffers />} />
+                    <Route path="/monitoring/logs" element={<WeeklyLogModule />} />
+                    <Route path="/completion" element={<InternshipCompletionStatus />} />
+                  </Route>
+
+                  <Route element={<RoleGuard allowedRoles={['PLACEMENT_OFFICE', 'FACULTY', 'HOD', 'IC', 'RECRUITER']} />}>
+                    <Route path="/applications" element={<ApplicationList />} />
+                    <Route path="/applications/:id" element={<ApplicationDetail />} />
+                  </Route>
+
+                  <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
+                    {/* Placeholder content removed as it's now handled by the RoleGuarded routes above */}
+                  </Route>
 
                   <Route path="/guides" element={<GuideAssignment />} />
                   <Route path="/assigned-students" element={<AssignedStudents />} />

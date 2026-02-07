@@ -11,11 +11,15 @@ import { useNotifications } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
 import { RecruiterService } from '../../services/mock/RecruiterService';
 import { Lock } from 'lucide-react';
+import type { StudentApplication } from '../../types';
+import Badge from '../../components/ui/Badge';
 
 const RecruiterDashboard = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [myInternships, setMyInternships] = useState<Internship[]>([]);
+    const [allApplications, setAllApplications] = useState<StudentApplication[]>([]);
+    const [topApplicants, setTopApplicants] = useState<StudentApplication[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isBanned, setIsBanned] = useState(false);
 
@@ -31,6 +35,7 @@ const RecruiterDashboard = () => {
         };
         checkBanStatus();
         loadInternships();
+        loadApplications();
     }, [user]);
 
     const loadInternships = async () => {
@@ -39,6 +44,22 @@ const RecruiterDashboard = () => {
             setMyInternships(data || []);
         } catch (error) {
             console.error("Failed to fetch internships", error);
+        }
+    };
+
+    const loadApplications = async () => {
+        try {
+            // Seed demo apps if empty
+            InternshipService.seedDemoData();
+
+            const [apps, top] = await Promise.all([
+                InternshipService.getApplicationsByRecruiter(),
+                InternshipService.getTopApplicants(5)
+            ]);
+            setAllApplications(apps);
+            setTopApplicants(top);
+        } catch (error) {
+            console.error("Failed to load applications", error);
         } finally {
             setIsLoading(false);
         }
@@ -88,9 +109,9 @@ const RecruiterDashboard = () => {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500 relative">
+        <div className="space-y-8 dashboard-enter relative">
             {/* ... Header and Filters ... */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 dashboard-header">
                 <div>
                     <h1 className="text-2xl font-bold text-[#0F2137]">Corporate Recruiter Portal</h1>
                     <p className="text-slate-500 text-sm font-medium mt-1">Post opportunities and manage CHRIST University talent applications.</p>
@@ -120,15 +141,71 @@ const RecruiterDashboard = () => {
             {/* Stats Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <StatCard label="My Postings" value={myInternships.length.toString()} icon={Briefcase} color="navy" />
-                    <StatCard label="Total Applications" value="--" icon={Users} color="purple" />
-                    <StatCard label="Unread Queries" value="0" icon={MessageSquare} color="amber" />
+                    <div className="dashboard-card stat-card-hover">
+                        <StatCard label="My Postings" value={myInternships.length.toString()} icon={Briefcase} color="navy" />
+                    </div>
+                    <div className="dashboard-card stat-card-hover">
+                        <StatCard label="Total Applications" value={allApplications.length.toString()} icon={Users} color="purple" />
+                    </div>
+                    <div className="dashboard-card stat-card-hover">
+                        <StatCard label="Active Shortlists" value={allApplications.filter(a => a.status === 'SHORTLISTED' || a.status === 'APPROVED').length.toString()} icon={MessageSquare} color="amber" />
+                    </div>
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 dashboard-table">
                 {/* Chart Section */}
                 <RecruiterStatsChart data={[]} />
+
+                {/* AI TOP APPLICANTS SECTION */}
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <div className="flex items-center gap-2">
+                            <h2 className="text-lg font-bold text-[#0F2137]">Top Applicants</h2>
+                            <Badge variant="info" className="bg-blue-600 text-white border-none px-2 py-0">AI Recommended</Badge>
+                        </div>
+                        <Button variant="ghost" size="sm" onClick={() => navigate('/applications')} className="text-xs">View All</Button>
+                    </div>
+
+                    <div className="space-y-3">
+                        {isLoading ? (
+                            Array(3).fill(0).map((_, i) => (
+                                <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
+                            ))
+                        ) : topApplicants.length > 0 ? (
+                            topApplicants.map((app) => (
+                                <div
+                                    key={app.id}
+                                    className="bg-white p-4 rounded-xl border border-slate-200 hover:border-blue-500/30 hover:shadow-md transition-all cursor-pointer group"
+                                    onClick={() => navigate(`/applications/${app.id}`)}
+                                >
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex gap-4">
+                                            <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-[#0F2137] font-bold border border-slate-100 group-hover:bg-blue-50 transition-colors">
+                                                {app.student?.name?.substring(0, 1)}
+                                            </div>
+                                            <div>
+                                                <h4 className="font-bold text-sm text-[#0F172A] group-hover:text-blue-600 transition-colors">{app.student?.name}</h4>
+                                                <div className="flex items-center gap-2 mt-0.5">
+                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">CGPA: {app.student?.cgpa?.toFixed(2)}</span>
+                                                    <span className="w-1 h-1 rounded-full bg-slate-200" />
+                                                    <span className="text-[10px] font-bold text-slate-400">Match: {app.matchScore}%</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-2 py-1 rounded-lg border border-emerald-100 italic">
+                                            {app.aiReasoning?.split('.')[0] + '.'}
+                                        </div>
+                                    </div>
+                                </div>
+                            ))
+                        ) : (
+                            <div className="p-12 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50">
+                                <p className="text-slate-400 text-sm">No recommended applicants yet.</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
 
                 {/* My Recent Postings */}
                 <div className="space-y-4">

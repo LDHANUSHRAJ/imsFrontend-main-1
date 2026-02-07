@@ -40,8 +40,8 @@ const ICDashboard = () => {
     }, []);
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
+        <div className="space-y-8 dashboard-enter">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 dashboard-header">
                 <div>
                     <h1 className="text-2xl font-bold text-[#0F2137]">INTERNSHIPS</h1>
                     <p className="text-slate-500 text-sm font-medium mt-1">Manage global internship sessions and student approvals.</p>
@@ -55,19 +55,27 @@ const ICDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <StatCard label="Active Students" value={stats.activeStudents || '1,245'} icon={Users} color="navy" />
-                <StatCard label="Placement Drives" value={stats.placementDrives || '24'} icon={Calendar} color="purple" />
-                <StatCard label="Open Vacancies" value={stats.openVacancies || '12'} icon={Briefcase} color="amber" />
-                <StatCard label="Pending Approvals" value={pendingInternships.length > 0 ? pendingInternships.length.toString() : '0'} icon={CheckCircle} color="green" />
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="Active Students" value={stats.activeStudents || '1,245'} icon={Users} color="navy" />
+                </div>
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="Placement Drives" value={stats.placementDrives || '24'} icon={Calendar} color="purple" />
+                </div>
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="Open Vacancies" value={stats.openVacancies || '12'} icon={Briefcase} color="amber" />
+                </div>
+                <div className="dashboard-card stat-card-hover">
+                    <StatCard label="Pending Approvals" value={pendingInternships.length > 0 ? pendingInternships.length.toString() : '0'} icon={CheckCircle} color="green" />
+                </div>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 dashboard-table">
                 {/* Real Data Charts */}
                 <PlacementStatsChart data={stats.placementStats || []} />
                 <ApplicationsTrendChart data={stats.applicationTrends || []} />
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8" style={{ animationDelay: '0.6s', animationFillMode: 'both', animation: 'fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1)' }}>
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                     <h3 className="font-bold text-[#0F2137] uppercase tracking-wider text-sm mb-6">Pending Internship Approvals</h3>
                     <div className="space-y-3">
@@ -87,7 +95,7 @@ const ICDashboard = () => {
                     </div>
                 </div>
 
-                <div className="bg-[#0F2137] rounded-2xl p-6 text-white shadow-xl shadow-blue-900/20 relative overflow-hidden">
+                <div className="bg-[#0F2137] rounded-2xl p-6 text-white shadow-xl shadow-blue-900/20 relative overflow-hidden welcome-banner">
                     <Calendar className="absolute -right-4 -bottom-4 h-32 w-32 text-white/5 rotate-12" />
                     <h3 className="font-bold uppercase tracking-widest text-xs text-blue-400 mb-4">Critical Deadlines</h3>
                     <div className="space-y-6 relative z-10">

@@ -19,10 +19,23 @@ export interface Department {
     name: string;
 }
 
+export interface Program {
+    id: string;
+    name: string;
+    department_id: string;
+}
+
+export interface Campus {
+    id: string;
+    name: string;
+}
+
 export interface Internship {
     id: string;
     title: string;
+    company_name?: string; // High-level UI identification
     description: string;
+    requirements?: string[]; // Added for detailed view
     status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED';
     department: Department;
     location_type: 'REMOTE' | 'ONSITE' | 'HYBRID';
@@ -32,11 +45,14 @@ export interface Internship {
     created_at: string;
     corporate_id: string;
     has_applied: boolean | null;
+    is_verified?: boolean; // For Placement Office verification status
 }
 
 export interface InternshipCreate {
     title: string;
+    company_name?: string;
     description: string;
+    requirements?: string[];
     department_id: string;
     location_type: 'REMOTE' | 'ONSITE' | 'HYBRID';
     is_paid: boolean;
@@ -57,16 +73,21 @@ export interface InternshipUpdate {
 export interface StudentApplication {
     id: string;
     resume_link: string;
+    updated_resume_url?: string; // The one uploaded during application
+    skills?: string[]; // Skills submitted during application
     github_link?: string | null;
     linkedin_link?: string | null;
-    status: string;
+    status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'SHORTLISTED' | 'REJECTED' | 'OFFER_RECEIVED' | 'ARCHIVED' | 'ACTIVE';
     created_at: string;
     internship_id: string;
     student_id: string;
     student: {
         name: string;
         email: string;
+        cgpa?: number; // Added for filtering/AI scoring
     };
+    matchScore?: number; // AI score 0-100
+    aiReasoning?: string; // Why they matched
 }
 
 export interface CorporateRegister {
@@ -90,6 +111,8 @@ export interface StudentRegister {
     email: string;
     password: string;
     department_id: string;
+    program_id: string;
+    campus_id: string;
 }
 
 export interface AdminUserCreate {
@@ -127,11 +150,14 @@ export interface GuideAssignment {
     id: string;
     studentName: string;
     studentRegNo: string;
+    department: string;
     internshipTitle: string;
     companyName: string;
     status: string;
     guide?: string;
+    guideId?: string;
     feedback?: MonitoringFeedback[];
+    assignmentReasoning?: string;
 }
 
 export interface WeeklyLog {
@@ -140,11 +166,26 @@ export interface WeeklyLog {
     startDate: string;
     endDate: string;
     workSummary: string;
-    learningOutcomes: string;
-    status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'SUBMITTED';
+    skillsLearned: string;
+    challengesFaced: string;
+    hoursWorked: number;
+    status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
     guideComments?: string;
-    attachments?: string[];
-    submissionDate: string;
+    attachments?: string[]; // Screenshots/Docs
+    submissionDate?: string;
+}
+
+export interface InternshipCompletion {
+    id: string;
+    studentId: string;
+    internshipId: string;
+    totalLogsSubmitted: number;
+    attendancePercentage: number;
+    guideRating: number;
+    finalReportUrl?: string;
+    status: 'IN_PROGRESS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+    certificateUrl?: string;
+    completedAt?: string;
 }
 
 export interface GuideFeedback {
@@ -165,4 +206,31 @@ export interface StudentProfileExtended extends GuideAssignment {
     endDate: string;
     logs: WeeklyLog[];
     finalFeedback?: GuideFeedback;
+}
+
+export interface Faculty {
+    id: string;
+    name: string;
+    department: string;
+    expertise: string[];
+    email: string;
+    currentLoad: number;
+    maxCapacity: number;
+}
+
+export interface AssignmentRecommendation {
+    studentId: string;
+    facultyId: string;
+    facultyName: string;
+    matchScore: number;
+    reasoning: string;
+    matchedSpecializations?: string[];
+}
+
+export interface AssignmentStats {
+    totalStudents: number;
+    assignedStudents: number;
+    unassignedStudents: number;
+    byDepartment: Record<string, number>;
+    byStatus: Record<string, number>;
 }

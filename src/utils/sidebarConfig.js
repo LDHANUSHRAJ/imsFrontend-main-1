@@ -28,4 +28,19 @@ export const sidebarConfig = {
         { label: "My Internships", path: "/recruiter/list" },
         { label: "Reports", path: "/reports" },
     ],
+
+    STUDENT: [
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Offers", path: "/offers" },
+        { label: "My Applications", path: "/applications" },
+        { label: "My Internship", path: "/my-internship" },
+    ],
+
+    PLACEMENT_OFFICE: [
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Recruiters", path: "/recruiters" },
+        { label: "Company Approvals", path: "/company-approvals" },
+        { label: "Credits Approval", path: "/credits-approval" },
+        { label: "Credit Auth", path: "/credit-auth" },
+    ],
 };

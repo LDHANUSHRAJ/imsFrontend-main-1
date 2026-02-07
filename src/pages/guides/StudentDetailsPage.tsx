@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Building, Calendar, Mail, CheckCircle, AlertCircle, Clock, Award } from 'lucide-react';
 import { GuideService } from '../../services/guide.service';
-import { StudentProfileExtended, WeeklyLog, GuideFeedback } from '../../types';
+import type { StudentProfileExtended, WeeklyLog, GuideFeedback } from '../../types';
 import StudentLogsList from './StudentLogsPage'; // Reusing the list component
 import FeedbackForm from './FeedbackForm';
 import Button from '../../components/ui/Button';
@@ -39,11 +39,27 @@ export default function StudentDetailsPage() {
     };
 
     const handleLogStatusUpdate = async (logId: string, status: 'APPROVED' | 'REJECTED', comment: string) => {
-        await GuideService.updateLogStatus(logId, status, comment);
+        if (!student) return;
+        await GuideService.updateLogStatus(student.id, logId, status, comment);
         // Refresh logs locally
         setLogs(current => current.map(log =>
             log.id === logId ? { ...log, status, guideComments: comment } : log
         ));
+    };
+
+    const handleLogUpdate = async (logId: string, data: Partial<WeeklyLog>) => {
+        if (!student) return;
+        await GuideService.updateLog(student.id, logId, data);
+        setLogs(current => current.map(log =>
+            log.id === logId ? { ...log, ...data } : log
+        ));
+    };
+
+    const handleLogDelete = async (logId: string) => {
+        if (!student) return;
+        if (!confirm("Are you sure you want to delete this log?")) return;
+        await GuideService.deleteLog(student.id, logId);
+        setLogs(current => current.filter(log => log.id !== logId));
     };
 
     const handleFeedbackSubmit = async (feedback: GuideFeedback) => {
@@ -56,7 +72,7 @@ export default function StudentDetailsPage() {
     const handleInternshipApproval = async (approved: boolean) => {
         if (!student) return;
         const status = approved ? 'COMPLETED' : 'REJECTED';
-        const reason = approved ? undefined : prompt("Please provide a reason for rejection:");
+        const reason = approved ? undefined : (prompt("Please provide a reason for rejection:") || undefined);
         if (!approved && !reason) return; // Cancelled
 
         await GuideService.updateInternshipStatus(student.id, status, reason);
@@ -89,7 +105,7 @@ export default function StudentDetailsPage() {
                     {student.status === 'CLOSURE_SUBMITTED' && (
                         <Badge variant="warning">Action Required: Final Review</Badge>
                     )}
-                    <Badge variant={student.status === 'IN_PROGRESS' ? 'info' : 'success'}>{student.status}</Badge>
+                    <Badge variant={(student.status || '') === 'IN_PROGRESS' ? 'info' : 'success'}>{student.status || ''}</Badge>
                 </div>
             </div>
 
@@ -195,7 +211,12 @@ export default function StudentDetailsPage() {
             {/* Content Content */}
             <div className="min-h-[400px]">
                 {activeTab === 'logs' ? (
-                    <StudentLogsList logs={logs} onUpdateStatus={handleLogStatusUpdate} />
+                    <StudentLogsList
+                        logs={logs}
+                        onUpdateStatus={handleLogStatusUpdate}
+                        onUpdateContent={handleLogUpdate}
+                        onDeleteLog={handleLogDelete}
+                    />
                 ) : (
                     <div className="space-y-6">
                         {student.status !== 'CLOSURE_SUBMITTED' && student.status !== 'COMPLETED' ? (

@@ -1,5 +1,6 @@
 import { createContext, useContext, useState } from "react";
 import { AuthService } from "../services/auth.service";
+import { InternshipService } from "../services/internship.service";
 import api from "../services/api";
 
 const AuthContext = createContext();
@@ -32,6 +33,22 @@ export function AuthProvider({ children }) {
                     email: email,
                     name: "Placement Officer (Dev)"
                 };
+                setUser(mockUser);
+                localStorage.setItem("imsUser", JSON.stringify(mockUser));
+                return mockUser;
+            }
+            if (trimmedEmail === "student@christ.in" && trimmedPassword === "student123") {
+                console.log("Using Developer Bypass for Student");
+                const mockUser = {
+                    id: "mock-student",
+                    access_token: "mock_token_student_123",
+                    token_type: "bearer",
+                    role: "STUDENT",
+                    email: email,
+                    name: "Dhanush Raj (Demo)"
+                };
+                InternshipService.seedDemoData();
+                InternshipService.seedInitialInternships();
                 setUser(mockUser);
                 localStorage.setItem("imsUser", JSON.stringify(mockUser));
                 return mockUser;

@@ -1,169 +1,146 @@
-import type {
-    Internship,
-    InternshipCreate,
-    InternshipUpdate,
-    StudentApplication
-} from "../types";
-
-const STORAGE_KEY = 'mock_internships';
-const APP_STORAGE_KEY = 'mock_applications';
-
-// Helper to get data
-const getInternships = (): Internship[] => {
-    const stored = localStorage.getItem(STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-};
-
-const getStoredApplications = (): StudentApplication[] => {
-    const stored = localStorage.getItem(APP_STORAGE_KEY);
-    return stored ? JSON.parse(stored) : [];
-};
-
-const saveStoredApplications = (data: StudentApplication[]) => {
-    localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(data));
-};
-
-// Helper to save data
-const saveInternships = (data: Internship[]) => {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-};
+import api from "./api";
 
 export const InternshipService = {
     // Basic CRUD
     create: async (data: InternshipCreate): Promise<Internship> => {
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 600));
-
-        const newInternship: Internship = {
-            id: Math.random().toString(36).substr(2, 9),
-            ...data,
-            stipend: data.stipend || null, // Ensure stipend is handled
-            status: 'PENDING', // Default to Pending for admin approval
-            created_at: new Date().toISOString(),
-            corporate_id: 'current-user-id', // In a real app, this comes from token
-            department: { id: data.department_id, name: 'Target Dept' }, // Mock dept
-            has_applied: false,
-            duration: data.duration
-        };
-
-        const current = getInternships();
-        saveInternships([newInternship, ...current]);
-
-        return newInternship;
+        const response = await api.post<Internship>("/internships", data);
+        return response.data;
     },
 
     getAll: async (): Promise<Internship[]> => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        return getInternships();
+        const response = await api.get<Internship[]>("/internships/approved");
+        return response.data;
     },
 
     getMyInternships: async (): Promise<Internship[]> => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        // In a real mock with auth, we'd filter by corporate_id. 
-        // For now, assuming the user created them locally or just returning all for demo if corporate_id matches or just all.
-        // Let's filter by nothing for now to ensure they see what they created.
-        return getInternships();
+        const response = await api.get<Internship[]>("/internships/my");
+        return response.data;
     },
 
     getApprovedInternships: async (): Promise<Internship[]> => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        return getInternships().filter(i => i.status === 'APPROVED');
+        const response = await api.get<Internship[]>("/internships/approved");
+        return response.data;
     },
 
     getPendingInternships: async (): Promise<Internship[]> => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        return getInternships().filter(i => i.status === 'PENDING');
+        const response = await api.get<Internship[]>("/internships/pending");
+        return response.data;
+    },
+
+    getExternalPending: async (): Promise<any[]> => {
+        const response = await api.get<any[]>("/internships/external/pending");
+        return response.data;
     },
 
     close: async (id: string): Promise<string> => {
-        const current = getInternships();
-        const updated = current.map(i => i.id === id ? { ...i, status: 'CLOSED' as const } : i);
-        saveInternships(updated);
+        await api.post(`/internships/${id}/close`);
         return 'Closed';
     },
 
     delete: async (id: string): Promise<void> => {
-        const current = getInternships();
-        const updated = current.filter(i => i.id !== id);
-        saveInternships(updated);
+        await api.delete(`/internships/${id}`);
     },
 
     update: async (id: string, data: InternshipUpdate): Promise<Internship> => {
-        const current = getInternships();
-        const index = current.findIndex(i => i.id === id);
-        if (index === -1) throw new Error("Not found");
-
-        const updatedInternship = { ...current[index], ...data } as Internship;
-        // partial updates need careful merging, but for mock this is okay-ish if types match
-        // @ts-ignore
-        current[index] = updatedInternship;
-        saveInternships(current);
-        return updatedInternship;
+        const response = await api.put<Internship>(`/internships/${id}`, data);
+        return response.data;
     },
 
     getById: async (id: string): Promise<Internship> => {
-        const current = getInternships();
-        const found = current.find(i => i.id === id);
-        if (!found) throw new Error("Not found");
-        return found;
+        const response = await api.get<Internship>(`/internships/${id}`);
+        return response.data;
     },
 
-    // Applications (Mock)
-    apply: async (id: string, _formData: FormData): Promise<StudentApplication> => {
-        await new Promise(resolve => setTimeout(resolve, 800));
+    // Applications
+    apply: async (id: string, data: { resume_url: string; github_link?: string; linkedin_link?: string }): Promise<StudentApplication> => {
+        const response = await api.post<StudentApplication>(`/internships/${id}/apply`, data);
+        return response.data;
+    },
 
-        const newApp: StudentApplication = {
-            id: Math.random().toString(36).substr(2, 9),
-            status: 'APPLIED',
-            created_at: new Date().toISOString(),
-            internship_id: id,
-            student_id: 'mock-student', // In real app, get from auth
-            resume_link: '#',
-            student: { name: 'Mock Student Check', email: 'mock@student.com' }
-        };
+    submitExternal: async (data: { company_name: string; position: string; offer_letter_url: string }): Promise<any> => {
+        const response = await api.post("/internships/external", data);
+        return response.data;
+    },
 
-        const apps = getStoredApplications();
-        saveStoredApplications([...apps, newApp]);
+    getPlacementStatus: async (): Promise<any> => {
+        const response = await api.get("/internships/student/placement-status");
+        return response.data;
+    },
 
-        return newApp;
+    uploadOfferLetter: async (applicationId: string, file: File): Promise<StudentApplication> => {
+        const formData = new FormData();
+        formData.append('file', file);
+        const response = await api.post<StudentApplication>(`/internships/applications/${applicationId}/upload-offer`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
     },
 
     getApplications: async (id: string): Promise<StudentApplication[]> => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        const apps = getStoredApplications();
-        return apps.filter(a => a.internship_id === id);
+        const response = await api.get<StudentApplication[]>(`/internships/${id}/applications`);
+        return response.data;
     },
 
-    getAllApplications: async (): Promise<StudentApplication[]> => {
-        await new Promise(resolve => setTimeout(resolve, 400));
-        const apps = getStoredApplications();
+    getApplicationsByRecruiter: async (): Promise<StudentApplication[]> => {
+        const response = await api.get<StudentApplication[]>("/internships/recruiter/applications");
+        return response.data;
+    },
 
-        // If empty, seed some mock data for the chart to look good immediately?
-        // The user wants "Real Data", so if it's empty, it should show empty.
-        // But to demonstrate, I might want to ensure at least one exists if they apply.
-        return apps;
+    getTopApplicants: async (limit: number = 10): Promise<StudentApplication[]> => {
+        const response = await api.get<StudentApplication[]>(`/internships/recruiter/top-applicants?limit=${limit}`);
+        return response.data;
     },
 
     // Placement/Admin approval
     approve: async (id: string): Promise<Internship> => {
-        const current = getInternships();
-        const index = current.findIndex(i => i.id === id);
-        if (index !== -1) {
-            current[index].status = 'APPROVED';
-            saveInternships(current);
-            return current[index];
-        }
-        throw new Error("Not Found");
+        const response = await api.post<Internship>(`/admin/internships/${id}/approve`);
+        return response.data;
     },
 
     reject: async (id: string): Promise<Internship> => {
-        const current = getInternships();
-        const index = current.findIndex(i => i.id === id);
-        if (index !== -1) {
-            current[index].status = 'REJECTED';
-            saveInternships(current);
-            return current[index];
-        }
-        throw new Error("Not Found");
+        const response = await api.post<Internship>(`/admin/internships/${id}/reject`);
+        return response.data;
     },
+
+    activateInternship: async (applicationId: string): Promise<StudentApplication> => {
+        const response = await api.post<StudentApplication>(`/internships/applications/${applicationId}/activate`);
+        return response.data;
+    },
+
+    // Weekly Reports
+    submitWeeklyReport: async (data: {
+        title: string;
+        description: string;
+        week_number: number;
+        achievements: string;
+        challenges: string;
+        plans: string;
+    }): Promise<any> => {
+        const response = await api.post("/reports", data);
+        return response.data;
+    },
+
+    getClassReports: async (): Promise<WeeklyLog[]> => {
+        const response = await api.get<WeeklyLog[]>("/reports/class-reports");
+        return response.data;
+    },
+
+    getWeeklyLogs: async (internshipId: string): Promise<WeeklyLog[]> => {
+        const response = await api.get<WeeklyLog[]>(`/internships/${internshipId}/logs`);
+        return response.data;
+    },
+
+    getCompletionStatus: async (internshipId: string): Promise<InternshipCompletion> => {
+        const response = await api.get<InternshipCompletion>(`/internships/${internshipId}/completion`);
+        return response.data;
+    }
 };
+
+import type {
+    Internship,
+    InternshipCreate,
+    InternshipUpdate,
+    StudentApplication,
+    WeeklyLog,
+    InternshipCompletion
+} from "../types";

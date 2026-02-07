@@ -41,6 +41,36 @@ const MOCK_CLOSURES: ClosureRecord[] = [
             rating: 5,
             remarks: 'Exceptional performance throughout the internship. Highly recommended.'
         }
+    },
+    {
+        id: '3',
+        studentName: 'Ishaan Gupta',
+        studentRegNo: '21MCA012',
+        internshipTitle: 'Data Analyst',
+        companyName: 'Insight Partners',
+        duration: '4 Months',
+        status: 'CLOSED',
+        documents: ['Insight_Certificate.pdf', 'Data_Analysis_Project.pdf'],
+        credits: 6,
+        evaluation: {
+            rating: 4,
+            remarks: 'Strong analytical skills. Demonstrated proficiency in Python and SQL.'
+        }
+    },
+    {
+        id: '4',
+        studentName: 'Sanya Malhotra',
+        studentRegNo: '21MCA025',
+        internshipTitle: 'Machine Learning Intern',
+        companyName: 'AI Genix',
+        duration: '6 Months',
+        status: 'CLOSED',
+        documents: ['ML_Completion.pdf', 'Sentiment_Analysis_Report.pdf'],
+        credits: 8,
+        evaluation: {
+            rating: 5,
+            remarks: 'Exceptional grasp of ML concepts. Successfully deployed a sentiment analysis model.'
+        }
     }
 ];
 

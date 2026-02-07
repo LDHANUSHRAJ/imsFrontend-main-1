@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react';
 import { RecruiterService } from '../../services/mock/RecruiterService';
 import { useNotifications } from '../../context/NotificationContext';
 import Button from '../../components/ui/Button';
-import { CheckCircle, XCircle, ShieldOff, ShieldCheck, Eye, Loader2, Building2 } from 'lucide-react';
+import { CheckCircle, XCircle, ShieldOff, ShieldCheck, Eye, Loader2, Building2, ShieldAlert } from 'lucide-react';
+import Badge from '../../components/ui/Badge';
 
 const CompanyApproval = () => {
     const [companies, setCompanies] = useState<any[]>([]);
@@ -82,6 +83,18 @@ const CompanyApproval = () => {
                 <p className="text-slate-500 mt-1">Manage company registrations, verify credentials, and control access.</p>
             </div>
 
+            {companies.some(c => !c.isActive && RecruiterService.calculateTrustScore(c) < 60) && (
+                <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl flex items-start gap-3 animate-in fade-in slide-in-from-top-4">
+                    <div className="p-2 bg-amber-100 text-amber-600 rounded-lg">
+                        <ShieldAlert size={20} />
+                    </div>
+                    <div>
+                        <h4 className="text-sm font-bold text-amber-900">High-Risk Registrations Detected</h4>
+                        <p className="text-xs text-amber-700 mt-0.5">Some pending companies have low AI trust scores. Please verify their corporate credentials manually before approval.</p>
+                    </div>
+                </div>
+            )}
+
             <div className="bg-white border border-slate-200 rounded-xl shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left text-sm">
@@ -89,6 +102,7 @@ const CompanyApproval = () => {
                             <tr>
                                 <th className="px-6 py-4">Company Name</th>
                                 <th className="px-6 py-4">HR Contact</th>
+                                <th className="px-6 py-4">Trust Score</th>
                                 <th className="px-6 py-4">Status</th>
                                 <th className="px-6 py-4">Actions</th>
                             </tr>
@@ -110,6 +124,31 @@ const CompanyApproval = () => {
                                         <td className="px-6 py-4 text-slate-600">
                                             {company.name} <br />
                                             <span className="text-xs text-slate-400">{company.email}</span>
+                                        </td>
+                                        <td className="px-6 py-4">
+                                            {(() => {
+                                                const score = RecruiterService.calculateTrustScore(company);
+                                                return (
+                                                    <div className="flex flex-col gap-1">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="flex-1 h-1.5 w-16 bg-slate-100 rounded-full overflow-hidden">
+                                                                <div
+                                                                    className={`h-full rounded-full ${score >= 80 ? 'bg-emerald-500' : score >= 60 ? 'bg-amber-500' : 'bg-red-500'}`}
+                                                                    style={{ width: `${score}%` }}
+                                                                />
+                                                            </div>
+                                                            <span className={`text-xs font-black ${score >= 80 ? 'text-emerald-600' : score >= 60 ? 'text-amber-600' : 'text-red-600'}`}>
+                                                                {score}%
+                                                            </span>
+                                                        </div>
+                                                        {score < 60 && (
+                                                            <span className="text-[9px] font-bold text-red-500 uppercase tracking-tighter flex items-center gap-1">
+                                                                <ShieldAlert size={10} /> Risky Domain
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })()}
                                         </td>
                                         <td className="px-6 py-4">
                                             {company.isActive ? (

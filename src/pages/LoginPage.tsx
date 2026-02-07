@@ -1,17 +1,26 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, CheckCircle2 } from 'lucide-react';
 
 const LoginPage = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState<'IC' | 'HOD' | 'FACULTY' | 'RECRUITER'>('FACULTY');
+    const [role, setRole] = useState<'IC' | 'HOD' | 'FACULTY' | 'RECRUITER' | 'STUDENT' | 'PLACEMENT_OFFICE'>('FACULTY');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
+
+    React.useEffect(() => {
+        const params = new URLSearchParams(location.search);
+        const roleParam = params.get('role');
+        if (roleParam && ['IC', 'HOD', 'FACULTY', 'RECRUITER', 'STUDENT', 'PLACEMENT_OFFICE'].includes(roleParam)) {
+            setRole(roleParam as any);
+        }
+    }, [location]);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -66,7 +75,7 @@ const LoginPage = () => {
                             >
                                 <option value="FACULTY">Faculty Guide / Mentor</option>
                                 <option value="HOD">Head of Department (HOD)</option>
-                                <option value="IC">Internships</option>
+                                <option value="IC">Internships (Coordinator)</option>
                                 <option value="PLACEMENT_OFFICE">Placement Office</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">

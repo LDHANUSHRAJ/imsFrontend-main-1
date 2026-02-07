@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ChevronDown, ChevronRight, Check, Search } from 'lucide-react';
-import { PROGRAMS } from '../../data/programs';
+import { AdminService } from '../../services/admin.service';
+import type { Department, Program } from '../../types';
 
 interface DepartmentSelectorProps {
     selected: string[]; // List of selected 'Program - Subprogram' strings or just 'Subprogram' depending on need. Let's start with unique subprogram names.
@@ -13,6 +14,24 @@ const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({ selected, onCha
     const [isOpen, setIsOpen] = useState(false);
     const [expandedCategories, setExpandedCategories] = useState<string[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [departments, setDepartments] = useState<Department[]>([]);
+    const [programs, setPrograms] = useState<Program[]>([]);
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const [depts, progs] = await Promise.all([
+                    AdminService.getDepartments(),
+                    AdminService.getPrograms()
+                ]);
+                setDepartments(depts);
+                setPrograms(progs);
+            } catch (error) {
+                console.error("Failed to fetch selector data", error);
+            }
+        };
+        fetchData();
+    }, []);
 
     const toggleCategory = (category: string) => {
         setExpandedCategories(prev =>
@@ -20,19 +39,20 @@ const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({ selected, onCha
         );
     };
 
-    const handleSelect = (subprogram: string) => {
-        if (selected.includes(subprogram)) {
-            onChange(selected.filter(s => s !== subprogram));
+    const handleSelect = (programId: string) => {
+        if (selected.includes(programId)) {
+            onChange(selected.filter(id => id !== programId));
         } else {
-            onChange([...selected, subprogram]);
+            onChange([...selected, programId]);
         }
     };
 
-    // Filter categories based on search
-    const filteredPrograms = PROGRAMS.filter(program =>
-        program.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        program.subprograms.some(sub => sub.toLowerCase().includes(searchTerm.toLowerCase()))
-    );
+    // Filter departments and their programs
+    const filteredDepts = departments.filter(dept => {
+        const deptMatches = dept.name.toLowerCase().includes(searchTerm.toLowerCase());
+        const progMatches = programs.some(p => p.department_id === dept.id && p.name.toLowerCase().includes(searchTerm.toLowerCase()));
+        return deptMatches || progMatches;
+    });
 
     return (
         <div className="relative w-full">
@@ -64,35 +84,38 @@ const DepartmentSelector: React.FC<DepartmentSelectorProps> = ({ selected, onCha
                     </div>
 
                     <div className="overflow-y-auto p-2 scrollbar-thin">
-                        {filteredPrograms.length > 0 ? (
-                            filteredPrograms.map(program => (
-                                <div key={program.name} className="mb-1">
+                        {filteredDepts.length > 0 ? (
+                            filteredDepts.map(dept => (
+                                <div key={dept.id} className="mb-1">
                                     <div
                                         className="flex items-center gap-2 p-2 hover:bg-slate-50 rounded-lg cursor-pointer select-none"
-                                        onClick={() => toggleCategory(program.name)}
+                                        onClick={() => toggleCategory(dept.id)}
                                     >
-                                        {expandedCategories.includes(program.name) || searchTerm ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
-                                        <span className="text-sm font-semibold text-slate-700">{program.name}</span>
+                                        {expandedCategories.includes(dept.id) || searchTerm ? <ChevronDown size={14} className="text-slate-400" /> : <ChevronRight size={14} className="text-slate-400" />}
+                                        <span className="text-sm font-semibold text-slate-700">{dept.name}</span>
                                     </div>
 
-                                    {(expandedCategories.includes(program.name) || searchTerm) && (
+                                    {(expandedCategories.includes(dept.id) || searchTerm) && (
                                         <div className="ml-6 space-y-1 mt-1 border-l-2 border-slate-100 pl-2">
-                                            {program.subprograms.map(sub => (
-                                                <label key={sub} className="flex items-start gap-2 p-1.5 hover:bg-blue-50 rounded cursor-pointer group">
-                                                    <div className={`mt-0.5 w-4 h-4 border rounded flex items-center justify-center transition-colors ${selected.includes(sub) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}>
-                                                        {selected.includes(sub) && <Check size={10} className="text-white" />}
-                                                        <input
-                                                            type="checkbox"
-                                                            className="sr-only"
-                                                            checked={selected.includes(sub)}
-                                                            onChange={() => handleSelect(sub)}
-                                                        />
-                                                    </div>
-                                                    <span className={`text-xs leading-snug ${selected.includes(sub) ? 'text-blue-700 font-medium' : 'text-slate-600'}`}>
-                                                        {sub}
-                                                    </span>
-                                                </label>
-                                            ))}
+                                            {programs
+                                                .filter(p => p.department_id === dept.id)
+                                                .filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()) || dept.name.toLowerCase().includes(searchTerm.toLowerCase()))
+                                                .map(prog => (
+                                                    <label key={prog.id} className="flex items-start gap-2 p-1.5 hover:bg-blue-50 rounded cursor-pointer group">
+                                                        <div className={`mt-0.5 w-4 h-4 border rounded flex items-center justify-center transition-colors ${selected.includes(prog.id) ? 'bg-blue-600 border-blue-600' : 'border-slate-300 bg-white'}`}>
+                                                            {selected.includes(prog.id) && <Check size={10} className="text-white" />}
+                                                            <input
+                                                                type="checkbox"
+                                                                className="sr-only"
+                                                                checked={selected.includes(prog.id)}
+                                                                onChange={() => handleSelect(prog.id)}
+                                                            />
+                                                        </div>
+                                                        <span className={`text-xs leading-snug ${selected.includes(prog.id) ? 'text-blue-700 font-medium' : 'text-slate-600'}`}>
+                                                            {prog.name}
+                                                        </span>
+                                                    </label>
+                                                ))}
                                         </div>
                                     )}
                                 </div>

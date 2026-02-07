@@ -38,8 +38,9 @@ export const TableRow = ({ children, className, onClick }: { children: React.Rea
     <tr
         onClick={onClick}
         className={cn(
-            "group hover:bg-slate-50/50 transition-colors duration-150",
+            "group transition-all duration-200",
             onClick && "cursor-pointer",
+            "hover:bg-slate-50 hover-scale",
             className
         )}
     >

@@ -9,7 +9,7 @@ const LandingPage = () => {
             <div className="flex-1 flex flex-col items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
 
                 {/* Header Section */}
-                <div className="text-center mb-10 w-full max-w-4xl animate-in fade-in slide-in-from-bottom-4 duration-700">
+                <div className="text-center mb-10 w-full max-w-4xl animate-fade-in-up">
 
                     {/* Logo */}
                     <div className="flex justify-center mb-8">
@@ -42,18 +42,42 @@ const LandingPage = () => {
                 </div>
 
                 {/* Login Cards Section */}
-                <div className="w-full max-w-5xl animate-in fade-in slide-in-from-bottom-6 duration-700 delay-200">
+                <div className="w-full max-w-5xl animate-fade-in-up animation-delay-200">
 
                     <h2 className="text-2xl font-bold text-center text-[#0F2137] mb-8">
                         Select Your Portal
                     </h2>
 
-                    <div className="grid md:grid-cols-2 gap-6 mb-12">
+                    <div className="grid md:grid-cols-3 gap-6 mb-12">
+                        {/* Student Card */}
+                        <Link
+                            to="/login/student"
+                            className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-blue-600 overflow-hidden hover-lift"
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-br from-blue-600/5 to-indigo-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                            <div className="relative z-10">
+                                <div className="mb-6 flex justify-center">
+                                    <div className="h-20 w-20 bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                        <GraduationCap className="text-white" size={40} />
+                                    </div>
+                                </div>
+                                <h3 className="text-2xl font-bold text-[#0F2137] mb-3 text-center">
+                                    Student Portal
+                                </h3>
+                                <p className="text-slate-600 text-center mb-6 leading-relaxed">
+                                    Track applications, manage your internship progress, and discover AI-matched premium opportunities
+                                </p>
+                                <div className="flex items-center justify-center gap-2 text-blue-600 font-semibold group-hover:gap-4 transition-all">
+                                    <span>Login</span>
+                                    <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+                                </div>
+                            </div>
+                        </Link>
 
                         {/* Faculty/Admin Card */}
                         <Link
                             to="/login/staff"
-                            className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-[#0F2137] overflow-hidden"
+                            className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-[#0F2137] overflow-hidden hover-lift"
                         >
                             {/* Background gradient on hover */}
                             <div className="absolute inset-0 bg-gradient-to-br from-[#0F2137]/5 to-blue-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
@@ -62,7 +86,7 @@ const LandingPage = () => {
                                 {/* Icon */}
                                 <div className="mb-6 flex justify-center">
                                     <div className="h-20 w-20 bg-gradient-to-br from-[#0F2137] to-[#1a3a5f] rounded-2xl flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                        <GraduationCap className="text-white" size={40} />
+                                        <Users className="text-white" size={40} />
                                     </div>
                                 </div>
 
@@ -87,7 +111,7 @@ const LandingPage = () => {
                         {/* Recruiter Card */}
                         <Link
                             to="/login/recruiter"
-                            className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-[#D4AF37] overflow-hidden"
+                            className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-[#D4AF37] overflow-hidden hover-lift"
                         >
                             {/* Background gradient on hover */}
                             <div className="absolute inset-0 bg-gradient-to-br from-[#D4AF37]/5 to-amber-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>

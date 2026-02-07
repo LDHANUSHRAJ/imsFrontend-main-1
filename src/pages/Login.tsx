@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AuthService } from '../services/auth.service';
 import { RecruiterService } from '../services/mock/RecruiterService';
@@ -8,7 +8,7 @@ import { Building2, User, Mail, Globe, MapPin, Linkedin, Hash } from 'lucide-rea
 
 const RegistrationPage = () => {
     const navigate = useNavigate();
-    const { login, updateUser } = useAuth();
+    const { login } = useAuth();
     const { addNotification } = useNotifications();
     const [isLoading, setIsLoading] = useState(false);
 
@@ -119,7 +119,7 @@ const RegistrationPage = () => {
                     <p className="text-gray-500">Partner with Christ University for Campus Recruitment</p>
                 </div>
 
-                <form onSubmit={handleRegister} className="max-w-3xl mx-auto space-y-6">
+                <form onSubmit={handleRegister} className="max-w-3xl mx-auto space-y-6 animate-fade-in-up">
 
                     {/* Section 1: Company Details */}
                     <div>
@@ -127,22 +127,22 @@ const RegistrationPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Company Legal Name*</label>
-                                <input name="companyName" value={formData.companyName} onChange={handleChange} required className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Official Legal Name" />
+                                <input name="companyName" value={formData.companyName} onChange={handleChange} required className="input" placeholder="Official Legal Name" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Company Type*</label>
-                                <select name="companyType" value={formData.companyType} onChange={handleChange} className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none">
+                                <select name="companyType" value={formData.companyType} onChange={handleChange} className="input">
                                     <option value="STARTUP">Startup</option>
                                     <option value="CORPORATE">Corporate</option>
                                 </select>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Industry*</label>
-                                <input name="industry" value={formData.industry} onChange={handleChange} required className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="e.g. Technology, Fintech" />
+                                <input name="industry" value={formData.industry} onChange={handleChange} required className="input" placeholder="e.g. Technology, Fintech" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Country of Registration*</label>
-                                <input name="country" value={formData.country} onChange={handleChange} required className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="e.g. India, USA" />
+                                <input name="country" value={formData.country} onChange={handleChange} required className="input" placeholder="e.g. India, USA" />
                             </div>
                         </div>
                     </div>
@@ -154,15 +154,15 @@ const RegistrationPage = () => {
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">HR Name*</label>
                                 <div className="relative">
-                                    <User className="absolute left-3 top-3 text-gray-400" size={18} />
-                                    <input name="hrName" value={formData.hrName} onChange={handleChange} required className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Full Name" />
+                                    <User className="absolute left-3 top-3 text-gray-400 icon-hover" size={18} />
+                                    <input name="hrName" value={formData.hrName} onChange={handleChange} required className="input pl-10" placeholder="Full Name" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">HR Email ID*</label>
                                 <div className="relative">
-                                    <Mail className="absolute left-3 top-3 text-gray-400" size={18} />
-                                    <input type="email" name="hrEmail" value={formData.hrEmail} onChange={handleChange} required className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="hr@company.com" />
+                                    <Mail className="absolute left-3 top-3 text-gray-400 icon-hover" size={18} />
+                                    <input type="email" name="hrEmail" value={formData.hrEmail} onChange={handleChange} required className="input pl-10" placeholder="hr@company.com" />
                                 </div>
                             </div>
                         </div>
@@ -175,29 +175,29 @@ const RegistrationPage = () => {
                             <div className="md:col-span-2">
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Registered Address</label>
                                 <div className="relative">
-                                    <MapPin className="absolute left-3 top-3 text-gray-400" size={18} />
-                                    <input name="registeredAddress" value={formData.registeredAddress} onChange={handleChange} className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Full Office Address" />
+                                    <MapPin className="absolute left-3 top-3 text-gray-400 icon-hover" size={18} />
+                                    <input name="registeredAddress" value={formData.registeredAddress} onChange={handleChange} className="input pl-10" placeholder="Full Office Address" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Company Website</label>
                                 <div className="relative">
-                                    <Globe className="absolute left-3 top-3 text-gray-400" size={18} />
-                                    <input name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="https://company.com" />
+                                    <Globe className="absolute left-3 top-3 text-gray-400 icon-hover" size={18} />
+                                    <input name="websiteUrl" value={formData.websiteUrl} onChange={handleChange} className="input pl-10" placeholder="https://company.com" />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">LinkedIn URL</label>
                                 <div className="relative">
-                                    <Linkedin className="absolute left-3 top-3 text-gray-400" size={18} />
-                                    <input name="linkedinUrl" value={formData.linkedinUrl} onChange={handleChange} className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="https://linkedin.com/company/..." />
+                                    <Linkedin className="absolute left-3 top-3 text-gray-400 icon-hover" size={18} />
+                                    <input name="linkedinUrl" value={formData.linkedinUrl} onChange={handleChange} className="input pl-10" placeholder="https://linkedin.com/company/..." />
                                 </div>
                             </div>
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">Registered ID / CIN</label>
                                 <div className="relative">
-                                    <Hash className="absolute left-3 top-3 text-gray-400" size={18} />
-                                    <input name="registeredId" value={formData.registeredId} onChange={handleChange} className="w-full h-11 pl-10 pr-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="Registration Number" />
+                                    <Hash className="absolute left-3 top-3 text-gray-400 icon-hover" size={18} />
+                                    <input name="registeredId" value={formData.registeredId} onChange={handleChange} className="input pl-10" placeholder="Registration Number" />
                                 </div>
                             </div>
                         </div>
@@ -209,11 +209,11 @@ const RegistrationPage = () => {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Password*</label>
-                                <input type="password" name="password" value={formData.password} onChange={handleChange} required className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="••••••••" />
+                                <input type="password" name="password" value={formData.password} onChange={handleChange} required className="input" placeholder="••••••••" />
                             </div>
                             <div>
                                 <label className="block text-sm font-bold text-gray-700 mb-1">Confirm Password*</label>
-                                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className="w-full h-11 px-4 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-blue-900 outline-none" placeholder="••••••••" />
+                                <input type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleChange} required className="input" placeholder="••••••••" />
                             </div>
                         </div>
                     </div>
@@ -222,7 +222,7 @@ const RegistrationPage = () => {
                         <button
                             type="submit"
                             disabled={isLoading}
-                            className="w-full h-14 bg-[#0F2137] text-white text-lg font-bold rounded-xl hover:bg-[#1a2f4d] shadow-lg transition-all flex items-center justify-center gap-2"
+                            className="w-full h-14 btn-primary text-lg font-bold rounded-xl flex items-center justify-center gap-2"
                         >
                             {isLoading ? 'Processing Registration...' : 'Register Company'}
                         </button>
@@ -230,7 +230,7 @@ const RegistrationPage = () => {
 
                     <div className="text-center text-sm text-gray-500 pt-2">
                         Already registered?{' '}
-                        <button type="button" onClick={() => navigate('/login/recruiter')} className="text-[#0F2137] font-bold hover:underline">
+                        <button type="button" onClick={() => navigate('/login/recruiter')} className="text-[#0F2137] font-bold hover:underline transition-all hover:scale-105 active:scale-95">
                             Login Restricted to Corporate
                         </button>
                     </div>

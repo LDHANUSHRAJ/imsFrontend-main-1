@@ -15,6 +15,7 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
     const [formData, setFormData] = useState({
         title: '',
         description: '',
+        requirements: '', // Added as raw text for the form
         departments: [] as string[],
         department_id: "0", // Fallback ID
         location_type: 'REMOTE',
@@ -44,6 +45,7 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
                 setFormData({
                     title: job.title,
                     description: job.description,
+                    requirements: job.requirements?.join('\n') || '',
                     departments: (job as any).target_departments || (deptName ? [deptName] : []),
                     department_id: job.department?.id || "0",
                     location_type: (job as any).location_type || 'REMOTE',
@@ -87,10 +89,11 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
             const jobData: any = {
                 title: formData.title,
                 description: formData.description,
-                target_departments: formData.departments,
+                requirements: formData.requirements.split('\n').filter(r => r.trim() !== ''),
+                program_ids: formData.departments, // Now contains backend IDs
                 department_id: formData.department_id,
                 location_type: formData.location_type,
-                is_paid: String(formData.is_paid) === 'true',
+                is_paid: formData.is_paid,
                 stipend: formData.stipend,
                 duration: formData.duration
             };
@@ -185,9 +188,20 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
                 <div className="space-y-1">
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
                     <textarea
-                        className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[150px]"
+                        className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[120px]"
                         value={formData.description}
                         onChange={(e) => handleChange('description', e.target.value)}
+                        required
+                    />
+                </div>
+
+                <div className="space-y-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Requirements (One per line)*</label>
+                    <textarea
+                        className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[120px]"
+                        value={formData.requirements}
+                        onChange={(e) => handleChange('requirements', e.target.value)}
+                        placeholder="e.g. Proficiency in React&#10;Good communication skills&#10;Familiarity with Git"
                         required
                     />
                 </div>
