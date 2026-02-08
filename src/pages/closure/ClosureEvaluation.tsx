@@ -15,7 +15,7 @@ const ClosureEvaluation = () => {
     const [loading, setLoading] = useState(true);
     const [showEvalModal, setShowEvalModal] = useState(false);
     const [selectedClosure, setSelectedClosure] = useState<ClosureRecord | null>(null);
-    const [rating, setRating] = useState<number>(0);
+    // const [rating, setRating] = useState<number>(0);
     const [credits, setCredits] = useState<number>(0); // Added state
     const [remarks, setRemarks] = useState('');
 
@@ -194,8 +194,8 @@ const ClosureEvaluation = () => {
                                     key={c}
                                     onClick={() => setCredits(c)}
                                     className={`w-24 h-24 rounded-xl border-2 font-bold text-2xl transition-all active:scale-95 ${credits === c
-                                            ? 'bg-[#0F2137] border-[#0F2137] text-white shadow-lg shadow-blue-900/20'
-                                            : 'border-slate-200 text-slate-400 hover:border-[#EAB308]'
+                                        ? 'bg-[#0F2137] border-[#0F2137] text-white shadow-lg shadow-blue-900/20'
+                                        : 'border-slate-200 text-slate-400 hover:border-[#EAB308]'
                                         }`}
                                 >
                                     {c}

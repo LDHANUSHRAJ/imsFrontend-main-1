@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Plus, UserX, UserCheck, Shield, Building2, Search, Filter } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Plus, UserCheck, Shield, Building2, Search, Filter } from 'lucide-react';
 import { RecruiterService } from '../../services/mock/RecruiterService';
 import { useNotifications } from '../../context/NotificationContext';
 import Button from '../../components/ui/Button';

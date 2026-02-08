@@ -50,7 +50,7 @@ const RecruiterDashboard = () => {
     const loadApplications = async () => {
         try {
             // Seed demo apps if empty
-            InternshipService.seedDemoData();
+            // InternshipService.seedDemoData();
 
             const [apps, top] = await Promise.all([
                 InternshipService.getApplicationsByRecruiter(),
@@ -148,7 +148,7 @@ const RecruiterDashboard = () => {
                         <StatCard label="Total Applications" value={allApplications.length.toString()} icon={Users} color="purple" />
                     </div>
                     <div className="dashboard-card stat-card-hover">
-                        <StatCard label="Active Shortlists" value={allApplications.filter(a => a.status === 'SHORTLISTED' || a.status === 'APPROVED').length.toString()} icon={MessageSquare} color="amber" />
+                        <StatCard label="Active Shortlists" value={allApplications.filter(a => a.status === 'SHORTLISTED' || a.status === 'OFFER_RECEIVED').length.toString()} icon={MessageSquare} color="amber" />
                     </div>
                 </div>
             </div>

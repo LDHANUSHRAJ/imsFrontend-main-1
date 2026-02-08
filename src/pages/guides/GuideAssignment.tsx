@@ -37,7 +37,7 @@ const GuideAssignment = () => {
     const loadData = async () => {
         try {
             const [assignmentsData, facultyData, statsData] = await Promise.all([
-                GuideService.getAll(),
+                GuideService.getAllAssignments(),
                 FacultyService.getAll(),
                 GuideService.getAssignmentStats()
             ]);

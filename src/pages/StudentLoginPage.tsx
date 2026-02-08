@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { Mail, Lock, CheckCircle2, ArrowRight } from 'lucide-react';
 
@@ -112,9 +112,7 @@ const StudentLoginPage = () => {
                             </div>
                             <span className="text-xs text-slate-600 font-bold group-hover:text-blue-700">Stay signed in</span>
                         </label>
-                        <button type="button" className="text-xs font-black text-blue-600 hover:text-blue-800 uppercase tracking-tighter">
-                            Forgot Access?
-                        </button>
+
                     </div>
 
                     {/* Login Button */}
@@ -138,28 +136,10 @@ const StudentLoginPage = () => {
                         )}
                     </button>
 
-                    {/* Quick Demo Button (Kept but refined for Students) */}
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setEmail('student@christ.in');
-                            setPassword('student123');
-                        }}
-                        className="w-full h-12 bg-slate-50 text-slate-500 text-xs font-bold rounded-xl
-                                 hover:bg-blue-50 hover:text-blue-600 border border-slate-100 transition-all duration-200"
-                    >
-                        Use Demo Credentials
-                    </button>
+
                 </form>
 
-                <div className="mt-8 text-center relative z-10">
-                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest">
-                        Don't have an account? <Link to="/register-student" className="text-blue-600 hover:underline">Register Now</Link>
-                    </p>
-                    <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest mt-4">
-                        Technical problem? <a href="#" className="text-blue-600 hover:underline">Helpdesk</a>
-                    </p>
-                </div>
+
             </div>
         </div>
     );

@@ -8,7 +8,7 @@ import { Building2, User, Mail, Globe, MapPin, Linkedin, Hash } from 'lucide-rea
 
 const RegistrationPage = () => {
     const navigate = useNavigate();
-    const { login } = useAuth();
+    const { } = useAuth();
     const { addNotification } = useNotifications();
     const [isLoading, setIsLoading] = useState(false);
 

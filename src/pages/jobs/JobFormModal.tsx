@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import Button from "../../components/ui/Button";
+import Modal from "../../components/ui/Modal";
 
 interface Props {
     onClose: () => void;
@@ -8,7 +8,7 @@ interface Props {
 
 export default function JobFormModal({ onClose }: Props) {
     return (
-        <Modal onClose={onClose}>
+        <Modal isOpen={true} title="Create Internship Posting" onClose={onClose}>
             <div className="flex items-center justify-between mb-4">
                 <h2 className="text-lg font-semibold">Create Internship Posting</h2>
                 <button onClick={onClose}>

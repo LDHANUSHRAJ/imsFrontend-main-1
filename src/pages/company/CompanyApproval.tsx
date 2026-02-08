@@ -3,7 +3,7 @@ import { RecruiterService } from '../../services/mock/RecruiterService';
 import { useNotifications } from '../../context/NotificationContext';
 import Button from '../../components/ui/Button';
 import { CheckCircle, XCircle, ShieldOff, ShieldCheck, Eye, Loader2, Building2, ShieldAlert } from 'lucide-react';
-import Badge from '../../components/ui/Badge';
+// import Badge from '../../components/ui/Badge';
 
 const CompanyApproval = () => {
     const [companies, setCompanies] = useState<any[]>([]);

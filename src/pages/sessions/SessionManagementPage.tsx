@@ -1,10 +1,10 @@
 import { useState } from "react";
-import { Plus, X } from "lucide-react";
-import { FilterBar } from "@/components/filters/FilterBar";
-import { StatCard } from "@/components/dashboard/StatCard";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
-import { Modal } from "@/components/ui/Modal";
+import { Plus } from "lucide-react";
+import { FilterBar } from "../../components/filters/FilterBar";
+import StatCard from "../../components/ui/StatCard";
+import Badge from "../../components/ui/Badge";
+import Button from "../../components/ui/Button";
+import Modal from "../../components/ui/Modal";
 
 const mockSessions = [
     {
@@ -118,7 +118,7 @@ export default function SessionManagementPage() {
                                 <td className="px-6 py-4 text-right space-x-2">
                                     <Button variant="ghost">Edit</Button>
                                     {session.status === "Active" && (
-                                        <Button variant="destructive">
+                                        <Button variant="danger">
                                             Close
                                         </Button>
                                     )}
@@ -131,16 +131,7 @@ export default function SessionManagementPage() {
 
             {/* ================= MODAL ================= */}
             {openModal && (
-                <Modal onClose={() => setOpenModal(false)}>
-                    <div className="flex items-center justify-between mb-4">
-                        <h2 className="text-lg font-semibold">
-                            Create Internship Session
-                        </h2>
-                        <button onClick={() => setOpenModal(false)}>
-                            <X size={18} />
-                        </button>
-                    </div>
-
+                <Modal isOpen={openModal} title="Create Internship Session" onClose={() => setOpenModal(false)}>
                     <div className="space-y-4">
                         <select className="input">
                             <option>Select Program</option>

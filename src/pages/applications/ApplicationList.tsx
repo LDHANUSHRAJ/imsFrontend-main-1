@@ -11,7 +11,7 @@ import { CardSkeleton } from '../../components/ui/Skeleton';
 
 const ApplicationList = () => {
     const { user } = useAuth();
-    const isRecruiter = user?.role === 'RECRUITER';
+    const isRecruiter = user?.role === 'RECRUITER' || user?.role === 'CORPORATE';
 
     // Extended type to include Job details for display
     type ExtendedApplication = StudentApplication & { jobTitle: string; companyName: string };
@@ -216,7 +216,7 @@ const ApplicationList = () => {
                                     {apps.map((application) => (
                                         <Link
                                             key={application.id}
-                                            to={`/applications/${application.id}`}
+                                            to={`/manage/applications/${application.id}`}
                                             className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-xl transition-all border border-slate-200 hover:border-[#3B82F6] group relative overflow-hidden"
                                         >
                                             <div className="absolute top-0 right-0 p-3 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -255,7 +255,7 @@ const ApplicationList = () => {
                     {filteredApplications.map((application) => (
                         <Link
                             key={application.id}
-                            to={`/applications/${application.id}`}
+                            to={`/manage/applications/${application.id}`}
                             className="bg-white p-6 rounded-2xl shadow-sm hover:shadow-lg transition-all border border-slate-200 hover:border-[#3B82F6] group"
                         >
                             <div className="flex justify-between items-start mb-4">

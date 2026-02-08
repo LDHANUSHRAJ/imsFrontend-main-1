@@ -111,9 +111,12 @@ const JobPostingList = () => {
                 (job as any).company_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
             // Matches Department Filter
-            const jobDept = (job as any).department?.name || (job as any).target_departments?.[0] || '';
+            // Matches Department Filter
             const matchesDept = selectedDepartments.length === 0 ||
-                selectedDepartments.some(d => jobDept.includes(d) || (job as any).target_departments?.includes(d));
+                selectedDepartments.some(d =>
+                    (job.department && job.department.id === d) ||
+                    (job.programs && job.programs.some(p => p.id === d))
+                );
 
             return matchesSearch && matchesDept;
         })
@@ -360,13 +363,13 @@ const JobPostingList = () => {
                             </div>
 
                             {/* Targeted Departments */}
-                            {((previewJob as any).target_departments?.length > 0 || previewJob.department) && (
+                            {(previewJob.programs?.length > 0 || previewJob.department) && (
                                 <div className="bg-slate-50 p-4 rounded-lg border border-slate-100">
-                                    <h4 className="font-bold text-slate-700 mb-2 text-sm">Target Departments</h4>
+                                    <h4 className="font-bold text-slate-700 mb-2 text-sm">Target Programs</h4>
                                     <div className="flex flex-wrap gap-2">
-                                        {(previewJob as any).target_departments ? (
-                                            (previewJob as any).target_departments.map((d: string) => (
-                                                <span key={d} className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600 font-medium">{d}</span>
+                                        {previewJob.programs?.length > 0 ? (
+                                            previewJob.programs.map((p) => (
+                                                <span key={p.id} className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600 font-medium">{p.name}</span>
                                             ))
                                         ) : (
                                             <span className="px-2 py-1 bg-white border border-slate-200 rounded text-xs text-slate-600 font-medium">{previewJob.department?.name}</span>

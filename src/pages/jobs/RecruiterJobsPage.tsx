@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Plus, MessageSquare } from "lucide-react";
-import { FilterBar } from "@/components/filters/FilterBar";
-import { StatCard } from "@/components/dashboard/StatCard";
-import { Button } from "@/components/ui/Button";
+import { FilterBar } from "../../components/filters/FilterBar";
+import StatCard from "../../components/ui/StatCard";
+import Button from "../../components/ui/Button";
 import JobFormModal from "./JobFormModal";
 
 const mockJobs = [

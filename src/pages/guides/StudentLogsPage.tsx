@@ -67,7 +67,7 @@ export default function StudentLogsList({ logs, onUpdateStatus, onUpdateContent,
             {logs.map((log) => (
                 <div
                     key={log.id}
-                    className={`bg-white border rounded-xl p-4 shadow-sm transition-all ${log.status === 'PENDING' ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}
+                    className={`bg-white border rounded-xl p-4 shadow-sm transition-all ${log.status === 'SUBMITTED' ? 'border-amber-200 ring-1 ring-amber-100' : 'border-slate-200'}`}
                 >
                     <div className="flex justify-between items-start mb-3">
                         <div>
@@ -96,11 +96,31 @@ export default function StudentLogsList({ logs, onUpdateStatus, onUpdateContent,
                             </p>
                         </div>
                         <div>
-                            <h5 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-1">Learning Outcomes</h5>
-                            <p className="text-sm text-slate-700 bg-slate-50 p-2 rounded border border-slate-100">
-                                {log.learningOutcomes}
+                            <h5 className="text-xs font-bold text-green-600 uppercase tracking-wide mb-1">✨ Achievements</h5>
+                            <p className="text-sm text-slate-700 bg-green-50 p-2 rounded border border-green-100">
+                                {log.achievements || log.skillsLearned || 'No achievements mentioned'}
                             </p>
                         </div>
+                        <div>
+                            <h5 className="text-xs font-bold text-orange-600 uppercase tracking-wide mb-1">🔥 Challenges</h5>
+                            <p className="text-sm text-slate-700 bg-orange-50 p-2 rounded border border-orange-100">
+                                {log.challengesFaced || 'No challenges mentioned'}
+                            </p>
+                        </div>
+                        <div>
+                            <h5 className="text-xs font-bold text-blue-600 uppercase tracking-wide mb-1">🎯 Next Week</h5>
+                            <p className="text-sm text-slate-700 bg-blue-50 p-2 rounded border border-blue-100">
+                                {log.nextWeekPlan || 'No plans mentioned'}
+                            </p>
+                        </div>
+                        {log.hoursWorked > 0 && (
+                            <div>
+                                <h5 className="text-xs font-bold text-purple-600 uppercase tracking-wide mb-1">⏱️ Hours Worked</h5>
+                                <p className="text-sm font-semibold text-purple-700 bg-purple-50 p-2 rounded border border-purple-100">
+                                    {log.hoursWorked} hours
+                                </p>
+                            </div>
+                        )}
                     </div>
 
                     {log.attachments && log.attachments.length > 0 && (
@@ -175,7 +195,7 @@ export default function StudentLogsList({ logs, onUpdateStatus, onUpdateContent,
                             </div>
                         ) : (
                             <div className="flex gap-2 justify-end">
-                                {(log.status === 'PENDING' || log.status === 'SUBMITTED') && onUpdateStatus && (
+                                {(log.status === 'SUBMITTED') && onUpdateStatus && (
                                     <>
                                         <button
                                             onClick={() => handleActionSearch(log.id, 'APPROVED')}

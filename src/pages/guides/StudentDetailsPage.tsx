@@ -26,7 +26,7 @@ export default function StudentDetailsPage() {
         setIsLoading(true);
         try {
             const [profile, logData] = await Promise.all([
-                GuideService.getStudentDetails(studentId),
+                GuideService.getStudentProfile(studentId),
                 GuideService.getStudentLogs(studentId)
             ]);
             setStudent(profile);

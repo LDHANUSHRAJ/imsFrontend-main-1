@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Calendar, CheckCircle2, Clock,
     ChevronRight, Building2, FileText,
-    Upload, Bell
+    Upload, Bell, X
 } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import { InternshipService } from '../../services/internship.service';
@@ -13,8 +13,8 @@ const StatusTimeline = ({ currentStatus, createdAt }: { currentStatus: string, c
         { status: 'SUBMITTED', label: 'Application Submitted', desc: 'Your profile has been sent to the recruiter.' },
         { status: 'UNDER_REVIEW', label: 'Under Review', desc: 'The hiring team is evaluating your credentials.' },
         { status: 'SHORTLISTED', label: 'Shortlisted', desc: 'You have been moved to the interview round!' },
-        { status: 'OFFER_RECEIVED', label: 'Offer Received', desc: 'Congratulations! An offer has been issued.' },
-        { status: 'ACTIVE', label: 'Internship Active', desc: 'Onboarding complete. Your internship is live.' }
+        { status: 'ACCEPTED', label: 'Offer Received', desc: 'Congratulations! Upload your offer letter to proceed.' },
+        { status: 'ACTIVE', label: 'Internship Active', desc: 'Offer approved. Your internship is confirmed!' }
     ];
 
     const currentIdx = allStages.findIndex(s => s.status === currentStatus);
@@ -68,19 +68,25 @@ const StatusTimeline = ({ currentStatus, createdAt }: { currentStatus: string, c
 };
 
 const StudentApplications = () => {
-    const [activeTab, setActiveTab] = useState<'All' | 'Active' | 'Offers' | 'History'>('All');
+    const [activeTab, setActiveTab] = useState<'All' | 'Active' | 'Offers'>('All');
     const [applications, setApplications] = useState<StudentApplication[]>([]);
     const [internships, setInternships] = useState<Record<string, Internship>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+    const [isExternalModalOpen, setIsExternalModalOpen] = useState(false);
+    const [externalForm, setExternalForm] = useState<{ company_name: string; position: string; offer_letter: File | null }>({
+        company_name: '',
+        position: '',
+        offer_letter: null
+    });
 
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
                 const [apps, allInternships] = await Promise.all([
-                    InternshipService.getAllApplications(),
-                    InternshipService.getAll()
+                    InternshipService.getStudentApplications(),
+                    InternshipService.getApprovedInternships()
                 ]);
                 const internMap = allInternships.reduce((acc: Record<string, Internship>, curr: Internship) => ({ ...acc, [curr.id]: curr }), {});
                 setInternships(internMap);
@@ -94,11 +100,38 @@ const StudentApplications = () => {
         fetchData();
     }, []);
 
+    const handleExternalSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!externalForm.offer_letter) {
+            alert("Please upload an offer letter.");
+            return;
+        }
+        try {
+            await InternshipService.submitExternal({
+                company_name: externalForm.company_name,
+                position: externalForm.position,
+                offer_letter: externalForm.offer_letter
+            });
+            alert("External offer submitted successfully!");
+            setIsExternalModalOpen(false);
+            setExternalForm({ company_name: '', position: '', offer_letter: null });
+            // Optionally reload applications
+        } catch (error) {
+            console.error("Failed to submit external offer", error);
+            alert("Failed to submit external offer.");
+        }
+    };
+
     const filteredApps = applications.filter(app => {
-        if (activeTab === 'All') return app.status !== 'ARCHIVED';
-        if (activeTab === 'Active') return app.status === 'ACTIVE';
-        if (activeTab === 'Offers') return app.status === 'OFFER_RECEIVED';
-        if (activeTab === 'History') return app.status === 'REJECTED' || app.status === 'ARCHIVED';
+        if (activeTab === 'All') return app.status !== 'ARCHIVED' && app.status !== 'REJECTED';
+        if (activeTab === 'Active') {
+            // Show all in-progress applications
+            return ['SUBMITTED', 'UNDER_REVIEW', 'SHORTLISTED', 'ACCEPTED', 'ACTIVE'].includes(app.status);
+        }
+        if (activeTab === 'Offers') {
+            // Show only applications that have received offers and need offer letter upload
+            return app.status === 'ACCEPTED' && !app.offer_letter_url;
+        }
         return true;
     });
 
@@ -123,7 +156,10 @@ const StudentApplications = () => {
                     <p className="text-slate-400 font-bold mt-1 uppercase text-xs tracking-[0.2em] opacity-60">Track your progress and manage offers</p>
                 </div>
                 <div className="flex items-center gap-3">
-                    <button className="bg-white border border-slate-200 hover:border-slate-300 text-slate-600 font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center gap-2">
+                    <button
+                        onClick={() => setIsExternalModalOpen(true)}
+                        className="bg-white border border-slate-200 hover:border-slate-300 text-slate-600 font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-2xl transition-all shadow-sm active:scale-95 flex items-center gap-2"
+                    >
                         <Upload size={16} /> External Offer
                     </button>
                 </div>
@@ -147,13 +183,13 @@ const StudentApplications = () => {
 
             {/* Tabs */}
             <div className="flex gap-2 bg-slate-100/50 p-1.5 rounded-2xl max-w-fit border border-slate-100">
-                {['All', 'Active', 'Offers', 'History'].map((tab) => (
+                {['All', 'Active', 'Offers'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab as any)}
                         className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab
-                                ? 'bg-white text-blue-600 shadow-md border border-slate-100'
-                                : 'text-slate-400 hover:text-slate-600'
+                            ? 'bg-white text-blue-600 shadow-md border border-slate-100'
+                            : 'text-slate-400 hover:text-slate-600'
                             }`}
                     >
                         {tab}
@@ -197,10 +233,46 @@ const StudentApplications = () => {
                                         </div>
 
                                         <div className="flex items-center gap-3 shrink-0">
-                                            {app.status === 'OFFER_RECEIVED' && (
-                                                <button className="bg-emerald-500 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center gap-2">
-                                                    <Upload size={16} /> Upload Offer
-                                                </button>
+                                            {/* Show upload button for applications without offer letter */}
+                                            {!app.offer_letter_url && (
+                                                <div className="relative">
+                                                    <input
+                                                        type="file"
+                                                        id={`upload-offer-${app.id}`}
+                                                        className="hidden"
+                                                        accept=".pdf,.doc,.docx,.jpg,.png"
+                                                        onChange={async (e) => {
+                                                            const file = e.target.files?.[0];
+                                                            if (file) {
+                                                                try {
+                                                                    await InternshipService.uploadOfferLetter(app.id, file);
+                                                                    alert("Offer letter uploaded successfully!");
+                                                                    window.location.reload(); // Simple reload to refresh state
+                                                                } catch (err) {
+                                                                    console.error("Upload failed", err);
+                                                                    alert("Failed to upload offer letter.");
+                                                                }
+                                                            }
+                                                        }}
+                                                    />
+                                                    <label
+                                                        htmlFor={`upload-offer-${app.id}`}
+                                                        className="bg-emerald-500 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center gap-2 cursor-pointer"
+                                                    >
+                                                        <Upload size={16} /> Upload Offer
+                                                    </label>
+                                                </div>
+                                            )}
+                                            {/* Show link to view uploaded offer letter */}
+                                            {app.offer_letter_url && (
+                                                <a
+                                                    href={app.offer_letter_url}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="bg-blue-50 text-blue-600 font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl hover:bg-blue-100 transition-all flex items-center gap-2"
+                                                >
+                                                    <FileText size={16} /> View Offer Letter
+                                                </a>
                                             )}
                                             <button
                                                 onClick={() => setSelectedAppId(isExpanded ? null : app.id)}
@@ -245,6 +317,62 @@ const StudentApplications = () => {
                     </div>
                 )}
             </div>
+            {/* External Internship Modal */}
+            {isExternalModalOpen && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsExternalModalOpen(false)}></div>
+                    <div className="bg-white rounded-[32px] w-full max-w-lg overflow-hidden relative z-10 animate-in zoom-in-95 duration-300 shadow-2xl">
+                        <form onSubmit={handleExternalSubmit} className="p-8">
+                            <div className="flex justify-between items-start mb-6">
+                                <h2 className="text-2xl font-black text-[#0F172A]">Submit External Offer</h2>
+                                <button type="button" onClick={() => setIsExternalModalOpen(false)} className="p-2 hover:bg-slate-100 rounded-full transition-colors text-slate-400">
+                                    <X size={24} />
+                                </button>
+                            </div>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Company Name</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        value={externalForm.company_name}
+                                        onChange={(e) => setExternalForm({ ...externalForm, company_name: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Role / Position</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        value={externalForm.position}
+                                        onChange={(e) => setExternalForm({ ...externalForm, position: e.target.value })}
+                                        required
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-gray-700 mb-1">Offer Letter (PDF/Image)</label>
+                                    <input
+                                        type="file"
+                                        accept=".pdf,.doc,.docx,.jpg,.png"
+                                        className="w-full bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+                                        onChange={(e) => setExternalForm({ ...externalForm, offer_letter: e.target.files?.[0] || null })}
+                                        required
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="mt-8 flex justify-end gap-3">
+                                <button type="button" onClick={() => setIsExternalModalOpen(false)} className="px-4 py-2 text-slate-500 font-bold">Cancel</button>
+                                <button type="submit" className="bg-[#0F2137] text-white px-6 py-2 rounded-xl font-bold text-sm shadow-xl hover:scale-[1.02] transition-all">
+                                    Submit Offer
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

@@ -1,6 +1,6 @@
 
 import { PROGRAMS } from "../data/programs";
-import { Department } from "../types";
+import type { Department } from "../types";
 import api from "./api"; // Keep api for create/delete if needed, or comment out.
 
 export const DepartmentService = {

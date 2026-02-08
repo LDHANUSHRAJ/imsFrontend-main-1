@@ -1,11 +1,7 @@
 export const sidebarConfig = {
     IC: [
-        { label: "Dashboard", path: "/ic/dashboard" },
-        { label: "Internship Sessions", path: "/ic/sessions" },
-        { label: "Recruiter Management", path: "/ic/recruiters" },
-        { label: "Internship Approvals", path: "/ic/approvals" },
-        { label: "Guide Assignment", path: "/ic/guides" },
-        { label: "Reports", path: "/reports" },
+        { label: "Guide Allocation", path: "/ic/dashboard" },
+        { label: "Logout", path: "/logout" }, // Optional, usually in profile
     ],
 
     HOD: [
@@ -16,10 +12,8 @@ export const sidebarConfig = {
     ],
 
     FACULTY: [
-        { label: "Dashboard", path: "/faculty/dashboard" },
-        { label: "Assigned Students", path: "/faculty/students" },
-        { label: "Student Logs", path: "/faculty/logs" },
-        { label: "Reports", path: "/reports" },
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Assigned Students", path: "/assigned-students" },
     ],
 
     RECRUITER: [

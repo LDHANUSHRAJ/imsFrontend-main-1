@@ -3,10 +3,12 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'FACULTY' | 'CORPORATE' | 'PLACEMENT' | 'STUDENT' | 'ADMIN';
+    role: 'FACULTY' | 'CORPORATE' | 'PLACEMENT' | 'STUDENT' | 'ADMIN' | 'PROGRAMME_COORDINATOR' | 'PLACEMENT_HEAD' | 'HOD';
     company_name?: string | null;
     hr_name?: string | null;
     department_id?: string | null;
+    guide_id?: string | null;
+    guide_name?: string | null;
 }
 
 export interface AuthResponse {
@@ -33,11 +35,13 @@ export interface Campus {
 export interface Internship {
     id: string;
     title: string;
-    company_name?: string; // High-level UI identification
+    company_name?: string; // Note: Backend schema doesn't currently return this in top-level response
     description: string;
-    requirements?: string[]; // Added for detailed view
+    requirements?: string[]; // Note: Backend schema doesn't return this
     status: 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'CLOSED';
     department: Department;
+    campus?: Campus;
+    programs: Program[]; // Added to match backend
     location_type: 'REMOTE' | 'ONSITE' | 'HYBRID';
     is_paid: boolean;
     stipend: string | null;
@@ -52,11 +56,12 @@ export interface InternshipCreate {
     title: string;
     company_name?: string;
     description: string;
-    requirements?: string[];
+    // requirements is not in backend schema, we'll merge it into description
     department_id: string;
+    program_ids?: string[]; // Target programs
     location_type: 'REMOTE' | 'ONSITE' | 'HYBRID';
     is_paid: boolean;
-    stipend?: string | null;
+    stipend?: string | null; // Backend expects string
     duration: string;
 }
 
@@ -77,10 +82,18 @@ export interface StudentApplication {
     skills?: string[]; // Skills submitted during application
     github_link?: string | null;
     linkedin_link?: string | null;
-    status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'SHORTLISTED' | 'REJECTED' | 'OFFER_RECEIVED' | 'ARCHIVED' | 'ACTIVE';
+    status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'SHORTLISTED' | 'REJECTED' | 'ACCEPTED' | 'OFFER_RECEIVED' | 'ARCHIVED' | 'ACTIVE';
     created_at: string;
     internship_id: string;
     student_id: string;
+    offer_letter_url?: string | null; // Backend field for uploaded offer letter
+    internship?: { // Nested internship details from backend
+        id: string;
+        title: string;
+        corporate?: {
+            company_name: string;
+        } | null;
+    } | null;
     student: {
         name: string;
         email: string;
@@ -88,6 +101,16 @@ export interface StudentApplication {
     };
     matchScore?: number; // AI score 0-100
     aiReasoning?: string; // Why they matched
+}
+
+export interface PlacementStatus {
+    is_placed: boolean;
+    active_internship?: {
+        id: string;
+        title: string;
+        company_name?: string;
+        status: string;
+    } | null;
 }
 
 export interface CorporateRegister {
@@ -166,11 +189,13 @@ export interface WeeklyLog {
     startDate: string;
     endDate: string;
     workSummary: string;
-    skillsLearned: string;
+    skillsLearned: string; // Keeping for backward compatibility
+    achievements?: string; // NEW: What student achieved this week
     challengesFaced: string;
+    nextWeekPlan?: string; // NEW: Student's plan for next week
     hoursWorked: number;
     status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
-    guideComments?: string;
+    guideComments?: string; // Faculty feedback
     attachments?: string[]; // Screenshots/Docs
     submissionDate?: string;
 }
@@ -233,4 +258,59 @@ export interface AssignmentStats {
     unassignedStudents: number;
     byDepartment: Record<string, number>;
     byStatus: Record<string, number>;
+}
+// --- Student Portal & Reports ---
+
+export interface InternshipInfo {
+    id: string;
+    title: string;
+}
+
+export interface ExternalInternshipInfo {
+    id: string;
+    company_name: string;
+    position: string;
+}
+
+export interface StudentBasicInfo {
+    name: string;
+    email: string;
+}
+
+export interface ExternalInternshipResponse {
+    id: string;
+    student_id: string;
+    student?: StudentBasicInfo | null;
+    company_name: string;
+    position: string;
+    offer_letter_url: string;
+    status: string;
+    created_at: string;
+}
+
+export interface WeeklyReportCreate {
+    title: string;
+    description: string;
+    week_number: number;
+    achievements?: string | null;
+    challenges?: string | null;
+    plans?: string | null;
+    internship_id?: string | null;
+    external_internship_id?: string | null;
+}
+
+export interface WeeklyReportResponse {
+    id: string;
+    title: string;
+    description: string;
+    week_number: number;
+    achievements?: string | null;
+    challenges?: string | null;
+    plans?: string | null;
+    internship_id?: string | null;
+    external_internship_id?: string | null;
+    student_id: string;
+    submitted_at: string;
+    internship?: InternshipInfo | null;
+    external_internship?: ExternalInternshipInfo | null;
 }

@@ -16,14 +16,16 @@ const Dashboard = () => {
 
     // Component mapping strictly following Part B, C, E, F flows
     switch (user.role) {
-        case 'IC':
+        case 'PROGRAMME_COORDINATOR':
             return <ICDashboard />;
-        case 'PLACEMENT_OFFICE':
+        case 'PLACEMENT_HEAD':
+        case 'PLACEMENT':
             return <PlacementOfficeDashboard />;
         case 'HOD':
             return <HODDashboard />;
         case 'FACULTY':
             return <GuideDashboard />;
+        case 'CORPORATE':
         case 'RECRUITER':
             return <RecruiterDashboard />;
         case 'STUDENT':

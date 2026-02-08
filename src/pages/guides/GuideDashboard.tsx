@@ -7,11 +7,13 @@ import Button from "../../components/ui/Button";
 import { GuideService } from "../../services/guide.service";
 import type { GuideAssignment } from "../../types";
 import { Bell, ChevronRight, Users, FileText, CheckCircle, Clock } from "lucide-react";
+import { useNotifications } from "../../context/NotificationContext";
 
 export default function GuideDashboard() {
     const navigate = useNavigate();
     const [students, setStudents] = useState<GuideAssignment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const { notifications } = useNotifications();
 
     useEffect(() => {
         loadStudents();
@@ -20,10 +22,30 @@ export default function GuideDashboard() {
     const loadStudents = async () => {
         setIsLoading(true);
         try {
-            const data = await GuideService.getAll();
-            setStudents(data);
-        } catch (error) {
+            const data = await GuideService.getDashboard();
+
+            // Backend returns an object with internships array
+            const internshipsArray = data.internships || [];
+
+            if (!Array.isArray(internshipsArray)) {
+                console.error("Internships is not an array:", internshipsArray);
+                setStudents([]);
+                return;
+            }
+
+            // Map the response to the expected format
+            const mappedStudents = internshipsArray.map((item: any) => ({
+                id: item.student_id || item.id,
+                studentName: item.student_name || 'Unknown',
+                studentRegNo: item.student_email || '',
+                companyName: item.company || 'N/A',
+                status: item.is_completed ? 'COMPLETED' : 'ACTIVE'
+            }));
+
+            setStudents(mappedStudents as any);
+        } catch (error: any) {
             console.error("Failed to load students", error);
+            setStudents([]);
         } finally {
             setIsLoading(false);
         }
@@ -31,7 +53,7 @@ export default function GuideDashboard() {
 
     const stats = {
         total: students.length,
-        pendingLogs: students.filter(s => s.status === 'OVERDUE_LOGS' || s.status === 'IN_PROGRESS').length, // Mock logic
+        pendingLogs: students.filter(s => s.status === 'OVERDUE_LOGS' || s.status === 'IN_PROGRESS').length,
         closurePending: students.filter(s => s.status === 'CLOSURE_SUBMITTED').length,
         completed: students.filter(s => s.status === 'COMPLETED').length
     };
@@ -163,27 +185,19 @@ export default function GuideDashboard() {
                             <Bell size={16} className="text-amber-500" /> Notifications
                         </h3>
                         <div className="space-y-4">
-                            <div className="flex gap-3 items-start pb-3 border-b border-slate-50 last:border-0 last:pb-0">
-                                <div className="h-2 w-2 mt-2 rounded-full bg-blue-500 flex-shrink-0"></div>
-                                <div>
-                                    <p className="text-sm text-slate-700"><span className="font-bold">Rahul Mehta</span> submitted Internship Final Report.</p>
-                                    <p className="text-xs text-slate-400 mt-1">10 mins ago</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-3 items-start pb-3 border-b border-slate-50 last:border-0 last:pb-0">
-                                <div className="h-2 w-2 mt-2 rounded-full bg-amber-500 flex-shrink-0"></div>
-                                <div>
-                                    <p className="text-sm text-slate-700"><span className="font-bold">Karthik N</span> has 2 overdue weekly logs.</p>
-                                    <p className="text-xs text-slate-400 mt-1">2 hours ago</p>
-                                </div>
-                            </div>
-                            <div className="flex gap-3 items-start">
-                                <div className="h-2 w-2 mt-2 rounded-full bg-green-500 flex-shrink-0"></div>
-                                <div>
-                                    <p className="text-sm text-slate-700"><span className="font-bold">Ananya Rao</span> submitted Week 6 Log.</p>
-                                    <p className="text-xs text-slate-400 mt-1">Yesterday</p>
-                                </div>
-                            </div>
+                            {notifications.length > 0 ? (
+                                notifications.slice(0, 5).map((n) => (
+                                    <div key={n.id} className="flex gap-3 items-start pb-3 border-b border-slate-50 last:border-0 last:pb-0">
+                                        <div className={`h-2 w-2 mt-2 rounded-full flex-shrink-0 ${n.type === 'success' ? 'bg-green-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                                        <div>
+                                            <p className="text-sm text-slate-700"><span className="font-bold">{n.title}</span> {n.message}</p>
+                                            <p className="text-xs text-slate-400 mt-1">Just now</p>
+                                        </div>
+                                    </div>
+                                ))
+                            ) : (
+                                <p className="text-sm text-slate-400 text-center py-4">No new notifications</p>
+                            )}
                         </div>
                         <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-500 font-normal">View All Notifications</Button>
                     </div>

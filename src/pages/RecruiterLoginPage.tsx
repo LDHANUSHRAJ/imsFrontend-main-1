@@ -30,8 +30,8 @@ const RecruiterLoginPage = () => {
                 }
             }
 
-            // Force strict Recruiter role
-            await login(email, password, 'RECRUITER');
+            // Force strict Corporate role
+            await login(email, password, 'CORPORATE');
             navigate('/dashboard');
         } catch (err: any) {
             console.error(err);

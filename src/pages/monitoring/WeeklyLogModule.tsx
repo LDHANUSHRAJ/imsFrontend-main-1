@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useAuth } from '../../context/AuthContext';
 import {
     Calendar, CheckCircle2, Clock,
     Plus, ChevronRight,
@@ -23,17 +24,59 @@ const WeeklyLogModule = () => {
     });
 
     useEffect(() => {
-        fetchLogs();
+        checkEligibilityAndFetchLogs();
     }, []);
 
-    const fetchLogs = async () => {
+    const [eligibility, setEligibility] = useState({ isEligible: false, message: '' });
+    const { user } = useAuth();
+
+
+    useEffect(() => {
+        checkEligibilityAndFetchLogs();
+    }, []);
+
+    const checkEligibilityAndFetchLogs = async () => {
         setIsLoading(true);
         try {
-            // In a real app, this would be filtered by the active internship session ID
-            const data = await InternshipService.getWeeklyLogs('current-session-id');
-            setLogs(data);
+            // 1. Check Eligibility
+            const applications = await InternshipService.getStudentApplications();
+            const finalActiveApp = applications.find(app => app.status === 'ACTIVE');
+
+            if (!finalActiveApp) {
+                setEligibility({
+                    isEligible: false,
+                    message: 'You can only start logging weekly journals once your internship is officially approved and active.'
+                });
+                setIsLoading(false);
+                return;
+            }
+
+            if (!user?.guide_id) {
+                // Double check via profile if context is stale? 
+                // For now, rely on context. If guide assigned, they might need to relogin or we fetch profile.
+                // let's try to fetch fresh profile? No, let's stick to context for now.
+                setEligibility({
+                    isEligible: false,
+                    message: 'A Faculty Guide must be assigned to you before you can start submitting logs. Please contact your coordinator.'
+                });
+                setIsLoading(false);
+                return;
+            }
+
+            // Eligible
+            setEligibility({ isEligible: true, message: '' });
+
+
+            // 2. Fetch Logs
+            // Using the real internship ID instead of dummy
+            if (finalActiveApp.internship_id) {
+                const data = await InternshipService.getWeeklyLogs(finalActiveApp.internship_id);
+                setLogs(data);
+            }
+
         } catch (error) {
-            console.error('Failed to fetch logs:', error);
+            console.error('Failed to init logs module:', error);
+            setEligibility({ isEligible: false, message: 'Failed to verify eligibility. Please try again.' });
         } finally {
             setIsLoading(false);
         }
@@ -94,12 +137,27 @@ const WeeklyLogModule = () => {
                     <h1 className="text-4xl font-black text-[#0F172A] tracking-tighter italic">Weekly Journals</h1>
                     <p className="text-slate-400 font-bold mt-1 uppercase text-xs tracking-[0.2em] opacity-60">Log your progress and track performance</p>
                 </div>
-                <button
-                    onClick={() => setIsAddingLog(true)}
-                    className="bg-[#0F172A] text-white font-black text-xs uppercase tracking-widest px-8 py-4 rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2">
-                    <Plus size={18} /> New Weekly Entry
-                </button>
+                {eligibility.isEligible && (
+                    <button
+                        onClick={() => setIsAddingLog(true)}
+                        className="bg-[#0F172A] text-white font-black text-xs uppercase tracking-widest px-8 py-4 rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-slate-800 transition-all active:scale-95 flex items-center gap-2">
+                        <Plus size={18} /> New Weekly Entry
+                    </button>
+                )}
             </div>
+
+            {/* Eligibility Blockers */}
+            {!isLoading && !eligibility.isEligible && (
+                <div className="bg-amber-50 border-l-4 border-amber-500 p-6 rounded-r-xl flex items-start gap-4 animate-in slide-in-from-top-2">
+                    <div className="p-2 bg-amber-100 rounded-lg text-amber-600">
+                        <CheckCircle2 size={24} />
+                    </div>
+                    <div>
+                        <h3 className="text-lg font-black text-amber-800">Access Restricted</h3>
+                        <p className="text-amber-700 font-medium mt-1">{eligibility.message}</p>
+                    </div>
+                </div>
+            )}
 
             {/* Stats Overview */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -178,7 +236,9 @@ const WeeklyLogModule = () => {
                         </div>
                         <h3 className="text-2xl font-black text-slate-300 italic uppercase">Journal is empty</h3>
                         <p className="text-slate-400 max-w-xs mt-2 font-bold opacity-60">Start your first weekly entry to document your internship journey.</p>
-                        <button onClick={() => setIsAddingLog(true)} className="mt-8 text-blue-600 font-black uppercase text-xs hover:underline decoration-2 underline-offset-4 tracking-widest">Create Entry Now</button>
+                        {eligibility.isEligible && (
+                            <button onClick={() => setIsAddingLog(true)} className="mt-8 text-blue-600 font-black uppercase text-xs hover:underline decoration-2 underline-offset-4 tracking-widest">Create Entry Now</button>
+                        )}
                     </div>
                 )}
             </div>

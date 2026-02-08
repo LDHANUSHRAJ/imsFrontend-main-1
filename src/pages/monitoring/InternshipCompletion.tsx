@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import {
-    Award, CheckCircle2, TrendingUp,
+    Award, TrendingUp,
     Download, ShieldCheck, MapPin,
     Calendar, Star, FileText, QrCode,
     Clock

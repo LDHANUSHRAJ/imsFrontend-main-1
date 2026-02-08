@@ -20,10 +20,32 @@ export default function AssignedStudents() {
     const loadStudents = async () => {
         setIsLoading(true);
         try {
-            const data = await GuideService.getAll();
-            setStudents(data);
+            const data = await GuideService.getDashboard();
+
+            // Backend returns an object with internships array
+            const internshipsArray = data.internships || [];
+
+            if (!Array.isArray(internshipsArray)) {
+                console.error("Internships is not an array:", internshipsArray);
+                setStudents([]);
+                return;
+            }
+
+            // Map the response to the expected format
+            const mappedStudents = internshipsArray.map((item: any) => ({
+                id: item.student_id || item.id,
+                studentName: item.student_name || 'Unknown',
+                studentRegNo: item.student_email || '',
+                companyName: item.company || 'N/A',
+                internshipTitle: item.position || 'N/A',
+                department: item.class_name || 'N/A',
+                status: item.is_completed ? 'COMPLETED' : 'ACTIVE'
+            }));
+
+            setStudents(mappedStudents as any);
         } catch (error) {
             console.error("Failed to load students", error);
+            setStudents([]);
         } finally {
             setIsLoading(false);
         }

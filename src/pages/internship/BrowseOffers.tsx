@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import {
     Search, Filter, Briefcase,
     MapPin, Clock, ExternalLink,
-    X, CheckCircle2, Upload, ArrowRight, ChevronLeft,
+    X, CheckCircle2, ArrowRight, ChevronLeft,
     LayoutGrid, ListChecks
 } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
@@ -19,6 +19,7 @@ const BrowseOffers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('All');
     const [appliedIds, setAppliedIds] = useState<string[]>([]);
+    const [placementStatus, setPlacementStatus] = useState<any>(null);
     const [showFilters, setShowFilters] = useState(false);
 
     const [showApplyModal, setShowApplyModal] = useState(false);
@@ -26,18 +27,23 @@ const BrowseOffers = () => {
     const [applyStep, setApplyStep] = useState(1);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showSuccess, setShowSuccess] = useState(false);
+    const [resumeFile, setResumeFile] = useState<File | null>(null);
+    const [githubLink, setGithubLink] = useState('');
+    const [linkedinLink, setLinkedinLink] = useState('');
 
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
             try {
-                const [data, applications] = await Promise.all([
+                const [data, applications, status] = await Promise.all([
                     InternshipService.getAll(),
-                    InternshipService.getAllApplications()
+                    InternshipService.getStudentApplications(),
+                    InternshipService.getPlacementStatus()
                 ]);
                 setInternships(data);
                 setFilteredInternships(data);
-                setAppliedIds(applications.map(app => app.internship_id));
+                setAppliedIds(applications.map((app) => app.internship_id));
+                setPlacementStatus(status);
             } catch (error) {
                 console.error('Failed to fetch internships:', error);
             } finally {
@@ -52,36 +58,49 @@ const BrowseOffers = () => {
         if (searchQuery) {
             result = result.filter(i =>
                 i.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                i.company_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                i.location.toLowerCase().includes(searchQuery.toLowerCase())
+                (i.company_name?.toLowerCase().includes(searchQuery.toLowerCase()) ?? false) ||
+                i.location_type.toLowerCase().includes(searchQuery.toLowerCase())
             );
         }
         if (selectedCategory !== 'All') {
-            result = result.filter(i => i.category === selectedCategory);
+            result = result.filter(i => i.department.name === selectedCategory);
         }
         setFilteredInternships(result);
     }, [searchQuery, selectedCategory, internships]);
 
     const handleApply = (internship: Internship) => {
+        // Prevent applying if student is already placed
+        if (placementStatus?.is_placed) {
+            return;
+        }
         setSelectedInternship(internship);
         setShowApplyModal(true);
         setApplyStep(1);
+        setResumeFile(null); // Reset file
+        setGithubLink('');
+        setLinkedinLink('');
     };
 
     const confirmApplication = async () => {
         if (!selectedInternship) return;
+        if (!resumeFile) {
+            alert("Please upload a resume.");
+            return;
+        }
+
         setIsSubmitting(true);
         try {
             await InternshipService.apply(selectedInternship.id, {
-                student_id: user?.id || 'demo-student',
-                resume_link: 'resume_v1_demo.pdf',
-                cover_letter: 'I am highly interested in this role...'
+                resume: resumeFile,
+                github_link: githubLink || undefined,
+                linkedin_link: linkedinLink || undefined
             });
             setAppliedIds([...appliedIds, selectedInternship.id]);
             setShowApplyModal(false);
             setShowSuccess(true);
             setTimeout(() => setShowSuccess(false), 3000);
         } catch (error) {
+            console.error(error);
             alert('Application failed. Please try again.');
         } finally {
             setIsSubmitting(false);
@@ -165,8 +184,8 @@ const BrowseOffers = () => {
                                 <div className="w-14 h-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-50 transition-colors">
                                     <Briefcase size={28} className="text-slate-300 group-hover:text-blue-600 transition-colors" />
                                 </div>
-                                <Badge variant={intern.status === 'PUBLISHED' ? 'navy' : 'neutral'}>
-                                    {intern.status === 'PUBLISHED' ? 'ACTIVE' : intern.status}
+                                <Badge variant={intern.status === 'APPROVED' ? 'navy' : 'neutral'}>
+                                    {intern.status === 'APPROVED' ? 'ACTIVE' : intern.status}
                                 </Badge>
                             </div>
 
@@ -177,7 +196,7 @@ const BrowseOffers = () => {
                                 <div className="space-y-3 mb-8">
                                     <div className="flex items-center gap-3 text-slate-500 font-medium text-xs">
                                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400"><MapPin size={14} /></div>
-                                        {intern.location}
+                                        {intern.location_type}
                                     </div>
                                     <div className="flex items-center gap-3 text-slate-500 font-medium text-xs">
                                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400"><Clock size={14} /></div>
@@ -185,7 +204,7 @@ const BrowseOffers = () => {
                                     </div>
                                     <div className="flex items-center gap-3 text-slate-500 font-medium text-xs">
                                         <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-400"><Briefcase size={14} /></div>
-                                        {intern.category}
+                                        {intern.department.name}
                                     </div>
                                 </div>
                             </div>
@@ -261,13 +280,51 @@ const BrowseOffers = () => {
                                                     <CheckCircle2 size={24} />
                                                 </div>
                                                 <div>
-                                                    <p className="text-sm font-black text-slate-700 italic">{user?.name || 'Demo Student'}</p>
-                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Core Technical Profile</p>
+                                                    <p className="text-sm font-black text-slate-700 italic">{user?.name || 'Student'}</p>
+                                                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{user?.email}</p>
                                                 </div>
                                             </div>
-                                            <div className="flex justify-between items-center text-[10px] font-black uppercase tracking-widest">
-                                                <span className="text-slate-400">Default Resume</span>
-                                                <span className="text-blue-600 italic">cv_v2_2025.pdf</span>
+
+                                            <div className="space-y-4">
+                                                <div>
+                                                    <label className="block text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Resume Upload *</label>
+                                                    <div className="relative">
+                                                        <input
+                                                            type="file"
+                                                            accept=".pdf,.doc,.docx"
+                                                            onChange={(e) => setResumeFile(e.target.files?.[0] || null)}
+                                                            className="w-full text-sm text-slate-500
+                                                                file:mr-4 file:py-2 file:px-4
+                                                                file:rounded-full file:border-0
+                                                                file:text-xs file:font-semibold
+                                                                file:bg-blue-50 file:text-blue-700
+                                                                hover:file:bg-blue-100
+                                                                cursor-pointer"
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-black text-slate-900 uppercase tracking-widest mb-2">Github Profile</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="https://github.com/..."
+                                                        value={githubLink}
+                                                        onChange={(e) => setGithubLink(e.target.value)}
+                                                        className="w-full h-10 px-4 rounded-xl bg-white border border-slate-200 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                                    />
+                                                </div>
+
+                                                <div>
+                                                    <label className="block text-xs font-black text-slate-900 uppercase tracking-widest mb-2">LinkedIn Profile</label>
+                                                    <input
+                                                        type="text"
+                                                        placeholder="https://linkedin.com/in/..."
+                                                        value={linkedinLink}
+                                                        onChange={(e) => setLinkedinLink(e.target.value)}
+                                                        className="w-full h-10 px-4 rounded-xl bg-white border border-slate-200 text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
                                         <div className="space-y-3">
@@ -277,7 +334,13 @@ const BrowseOffers = () => {
                                             </div>
                                         </div>
                                         <button
-                                            onClick={() => setApplyStep(2)}
+                                            onClick={() => {
+                                                if (!resumeFile) {
+                                                    alert("Please upload a resume first");
+                                                    return;
+                                                }
+                                                setApplyStep(2);
+                                            }}
                                             className="w-full py-5 bg-[#0F172A] text-white font-black text-xs uppercase tracking-widest rounded-2xl shadow-xl shadow-blue-900/10 hover:bg-blue-600 transition-all active:scale-95 flex items-center justify-center gap-3">
                                             Review & Submit <ArrowRight size={18} />
                                         </button>

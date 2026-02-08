@@ -5,6 +5,8 @@ import Input from '../../components/ui/Input';
 import { useNotifications } from '../../context/NotificationContext';
 import DepartmentSelector from '../../components/ui/DepartmentSelector';
 import { InternshipService } from '../../services/internship.service';
+import { AdminService } from '../../services/admin.service';
+import type { Program } from '../../types';
 
 const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => {
     const navigate = useNavigate();
@@ -15,7 +17,6 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        requirements: '', // Added as raw text for the form
         departments: [] as string[],
         department_id: "0", // Fallback ID
         location_type: 'REMOTE',
@@ -23,6 +24,20 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
         stipend: '',
         duration: '',
     });
+
+    const [programs, setPrograms] = useState<Program[]>([]);
+
+    useEffect(() => {
+        const fetchPrograms = async () => {
+            try {
+                const data = await AdminService.getPrograms();
+                setPrograms(data);
+            } catch (err) {
+                console.error("Failed to fetch programs", err);
+            }
+        };
+        fetchPrograms();
+    }, []);
 
     // Detect Edit Mode from URL
     useEffect(() => {
@@ -41,12 +56,10 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
         try {
             const job = await InternshipService.getById(id);
             if (job) {
-                const deptName = (job as any).department?.name || '';
                 setFormData({
                     title: job.title,
                     description: job.description,
-                    requirements: job.requirements?.join('\n') || '',
-                    departments: (job as any).target_departments || (deptName ? [deptName] : []),
+                    departments: job.programs?.map(p => p.id) || [],
                     department_id: job.department?.id || "0",
                     location_type: (job as any).location_type || 'REMOTE',
                     is_paid: job.is_paid,
@@ -86,15 +99,23 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
         }
 
         try {
+            // Derive department_id from the first selected program
+            let derivedDeptId = formData.department_id;
+            if (formData.departments.length > 0 && programs.length > 0) {
+                const firstProgramId = formData.departments[0];
+                const prog = programs.find(p => p.id === firstProgramId);
+                // Ensure we have a valid string ID
+                if (prog && prog.department_id) derivedDeptId = prog.department_id;
+            }
+
             const jobData: any = {
                 title: formData.title,
                 description: formData.description,
-                requirements: formData.requirements.split('\n').filter(r => r.trim() !== ''),
                 program_ids: formData.departments, // Now contains backend IDs
-                department_id: formData.department_id,
+                department_id: derivedDeptId,
                 location_type: formData.location_type,
                 is_paid: formData.is_paid,
-                stipend: formData.stipend,
+                stipend: formData.is_paid && formData.stipend ? formData.stipend : null,
                 duration: formData.duration
             };
 
@@ -186,25 +207,17 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
                 <Input label="Duration*" placeholder="e.g. 6 Months" value={formData.duration} onChange={(e) => handleChange('duration', e.target.value)} required />
 
                 <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Description*</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Description & Requirements*</label>
                     <textarea
                         className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[120px]"
                         value={formData.description}
                         onChange={(e) => handleChange('description', e.target.value)}
+                        placeholder="Describe the role, responsibilities, and requirements..."
                         required
                     />
                 </div>
 
-                <div className="space-y-1">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Requirements (One per line)*</label>
-                    <textarea
-                        className="w-full bg-white border border-gray-300 rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[120px]"
-                        value={formData.requirements}
-                        onChange={(e) => handleChange('requirements', e.target.value)}
-                        placeholder="e.g. Proficiency in React&#10;Good communication skills&#10;Familiarity with Git"
-                        required
-                    />
-                </div>
+
             </section>
 
             <div className="flex justify-end pt-8 gap-4">
