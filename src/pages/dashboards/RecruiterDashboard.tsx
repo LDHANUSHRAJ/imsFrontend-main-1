@@ -49,15 +49,34 @@ const RecruiterDashboard = () => {
 
     const loadApplications = async () => {
         try {
-            // Seed demo apps if empty
-            // InternshipService.seedDemoData();
+            // Try aggregate fetch first
+            try {
+                const [apps, top] = await Promise.all([
+                    InternshipService.getApplicationsByRecruiter(),
+                    InternshipService.getTopApplicants(5)
+                ]);
+                setAllApplications(apps || []);
+                setTopApplicants(top || []);
+                setIsLoading(false);
+                return;
+            } catch (aggregateError: any) {
+                if (aggregateError.response?.status !== 404) {
+                    throw aggregateError;
+                }
+                console.warn("Aggregate recruiter endpoints not found, falling back to per-internship fetch");
+            }
 
-            const [apps, top] = await Promise.all([
-                InternshipService.getApplicationsByRecruiter(),
-                InternshipService.getTopApplicants(5)
-            ]);
-            setAllApplications(apps);
-            setTopApplicants(top);
+            // Fallback: Fetch applications for each of the recruiter's internships
+            const myJobs = await InternshipService.getMyInternships();
+            const appPromises = myJobs.map(job => InternshipService.getApplications(job.id));
+            const results = await Promise.all(appPromises);
+            const flatApps = results.flat();
+
+            setAllApplications(flatApps);
+            // Simple top applicants fallback: sort by CGPA if available
+            const sorted = [...flatApps].sort((a, b) => (b.student?.cgpa || 0) - (a.student?.cgpa || 0));
+            setTopApplicants(sorted.slice(0, 5));
+
         } catch (error) {
             console.error("Failed to load applications", error);
         } finally {

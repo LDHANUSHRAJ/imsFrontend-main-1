@@ -1,58 +1,51 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, Shield, CheckCircle, ChevronRight } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, CheckCircle, Shield } from 'lucide-react';
 
-// Providers - MUST be at the top
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
-
-// Auth & Services
-// import { logoutUser as logout } from './services/auth.service'; // Removed to use Context logout
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import RoleGuard from './components/auth/RoleGuard';
-
-// UI Components
 import NotificationDropdown from './components/notifications/NotificationDropdown';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 
 // Pages
 import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage'; // Staff Login
-import StudentLoginPage from './pages/StudentLoginPage'; // Dedicated Student Login
-import StudentRegisterPage from './pages/StudentRegisterPage'; // Student Register
-import RecruiterLoginPage from './pages/RecruiterLoginPage'; // Recruiter Login
-import Login from './pages/Login'; // Recruiter Registration
+import LoginPage from './pages/LoginPage';
+import StudentLoginPage from './pages/StudentLoginPage';
+import RecruiterLoginPage from './pages/RecruiterLoginPage';
+import Login from './pages/Login';
+import StudentRegisterPage from './pages/StudentRegisterPage';
 import Dashboard from './pages/Dashboard';
+import Unauthorized from './pages/Unauthorized';
+import NotFound from './pages/NotFound';
 
-import RecruiterManagement from './pages/recruiters/RecruiterManagement';
-import RecruiterProfile from './pages/recruiters/RecruiterProfile';
 import JobPostingList from './pages/jobs/JobPostingList';
 import JobForm from './pages/jobs/JobForm';
 import ApplicationList from './pages/applications/ApplicationList';
 import ApplicationDetail from './pages/applications/ApplicationDetail';
-import GuideAssignment from './pages/guides/GuideAssignment';
-import AssignedStudents from './pages/guides/AssignedStudents';
-import StudentDetailsPage from './pages/guides/StudentDetailsPage';
 import StudentApplications from './pages/applications/StudentApplications';
-import MyInternshipPortal from './pages/internship/MyInternshipPortal';
 import BrowseOffers from './pages/internship/BrowseOffers';
+import MyInternshipPortal from './pages/internship/MyInternshipPortal';
+import WeeklyReports from './pages/reports/WeeklyReports';
 import WeeklyLogModule from './pages/monitoring/WeeklyLogModule';
 import InternshipCompletionStatus from './pages/monitoring/InternshipCompletion';
-import WeeklyReports from './pages/reports/WeeklyReports';
-
 import ApprovedInternships from './pages/placement/ApprovedInternships';
 import CustomApprovals from './pages/placement/CustomApprovals';
-
-import PlacementProfile from './pages/profiles/PlacementProfile';
 import CompanyApproval from './pages/company/CompanyApproval';
+import RecruiterManagement from './pages/recruiters/RecruiterManagement';
 import ClosureEvaluation from './pages/closure/ClosureEvaluation';
 import CreditAuth from './pages/credit/CreditAuth';
 import UserManagement from './pages/admin/UserManagement';
-import NotFound from './pages/NotFound';
-import Unauthorized from './pages/Unauthorized';
-import ErrorBoundary from './components/ui/ErrorBoundary';
+import RecruiterProfile from './pages/recruiters/RecruiterProfile';
+import PlacementProfile from './pages/profiles/PlacementProfile';
+import StudentDetailsPage from './pages/guides/StudentDetailsPage';
+import GuideAssignment from './pages/guides/GuideAssignment';
+import AssignedStudents from './pages/guides/AssignedStudents';
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user, isAuthenticated, logout } = useAuth();
 
   // Define public pages that don't need the sidebar
@@ -74,8 +67,10 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         ];
       case 'PLACEMENT':
       case 'PLACEMENT_HEAD':
+      case 'PLACEMENT_OFFICE':
         return [
           { icon: LayoutDashboard, label: 'Internship Approvals', path: '/dashboard' },
+          { icon: Shield, label: 'Recruiter Approvals', path: '/company-approvals' },
           { icon: CheckCircle, label: 'Approved Internships', path: '/approved-internships' },
           { icon: FileText, label: 'Custom Approvals', path: '/custom-approvals' },
         ];
@@ -117,8 +112,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   };
 
   const navItems = getNavItems();
-
-  const navigate = useNavigate();
+  const isPlacement = user?.role === 'PLACEMENT' || user?.role === 'PLACEMENT_HEAD' || user?.role === 'PLACEMENT_OFFICE';
 
   const handleLogout = () => {
     const role = user?.role;
@@ -127,78 +121,73 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     } else {
       navigate('/');
     }
-    // Small timeout ensures navigation happens before state clears, 
-    // preventing ProtectedRoute from intercepting and redirecting to /login/staff
     setTimeout(logout, 50);
   };
 
   return (
     <div className="flex bg-gray-100 min-h-screen">
-      <aside className="w-64 bg-[#0F2540] text-white fixed h-full flex flex-col justify-between z-20 shadow-xl">
+      <aside className="w-64 bg-[#1A1C1E] text-white fixed h-full flex flex-col justify-between z-20 shadow-xl border-r border-white/5">
         <div>
-          <div className="p-6 border-b border-gray-700">
-            <h1 className="text-2xl font-bold text-[#D4AF37]">Christ University</h1>
-            <p className="text-sm text-gray-400 mt-1">
-              {user?.role === 'CORPORATE' || user?.role === 'RECRUITER' ? 'Recruiter Portal' :
-                user?.role === 'FACULTY' ? 'Faculty Portal' :
-                  user?.role === 'HOD' ? 'HOD Portal' :
-                    (user?.role === 'PLACEMENT' || user?.role === 'PLACEMENT_HEAD') ? 'Placement Office' :
-                      user?.role === 'PROGRAMME_COORDINATOR' ? 'Programme Coordinator' :
-                        user?.role === 'STUDENT' ? 'Student Portal' :
-                          'Internships'}
-            </p>
+          <div className="p-8">
+            <h1 className="text-xl font-bold text-white tracking-tight leading-none mb-1">
+              {isPlacement ? 'IMS Portal' : 'Christ'}
+            </h1>
+            {!isPlacement && <h1 className="text-xl font-bold text-white tracking-tight leading-none mb-3 opacity-60">University</h1>}
+
+            {isPlacement && (
+              <div className="mt-12 mb-6">
+                <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] mb-4">
+                  Management
+                </p>
+              </div>
+            )}
+
+            {!isPlacement && (
+              <div className="flex items-center gap-2 mb-6">
+                <div className="h-px w-6 bg-[#D4AF37]"></div>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">
+                  {user?.role === 'CORPORATE' || user?.role === 'RECRUITER' ? 'Recruiter Portal' :
+                    user?.role === 'FACULTY' ? 'Faculty Portal' :
+                      user?.role === 'HOD' ? 'HOD Portal' :
+                        (user?.role === 'PLACEMENT' || user?.role === 'PLACEMENT_HEAD') ? 'Placement Office' :
+                          user?.role === 'PROGRAMME_COORDINATOR' ? 'Programme Coordinator' :
+                            user?.role === 'STUDENT' ? 'Student Portal' :
+                              'Internships'}
+                </p>
+              </div>
+            )}
+
             <div className="mt-4">
               <NotificationDropdown />
             </div>
           </div>
-          <nav className="mt-6 px-4 space-y-2">
+          <nav className="px-4 space-y-1">
             {navItems.map((item, index) => (
               <Link
                 key={item.path}
                 to={item.path}
                 style={{ animationDelay: `${index * 0.05}s` }}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-300 nav-item animate-slide-in-left ${location.pathname.startsWith(item.path)
-                  ? "bg-[#1E3A5F] text-white shadow-lg border-l-4 border-[#D4AF37]"
-                  : "text-gray-300 hover:bg-[#1E3A5F] hover:text-white"
+                className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 nav-item animate-slide-in-left ${location.pathname.startsWith(item.path)
+                  ? isPlacement ? "bg-white/5 text-white" : "bg-[#1E3A5F] text-white shadow-lg border-l-4 border-[#D4AF37]"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
                   }`}
               >
-                <item.icon size={20} className={location.pathname.startsWith(item.path) ? "text-[#D4AF37]" : "icon-hover"} />
-                <span className="font-bold text-sm">{item.label}</span>
+                <item.icon size={18} className={location.pathname.startsWith(item.path) ? (isPlacement ? "text-white" : "text-[#D4AF37]") : "opacity-50"} />
+                <span className={`text-sm ${location.pathname.startsWith(item.path) ? "font-semibold" : "font-medium"}`}>{item.label}</span>
               </Link>
             ))}
           </nav>
         </div>
-        <div className="p-4 border-t border-gray-700 bg-[#0A1A2F]">
-          {user?.role === 'STUDENT' ? (
-            <div className="flex items-center justify-between p-2 rounded-xl hover:bg-[#1E3A5F] transition-all cursor-pointer group">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-black text-xs shadow-lg shadow-blue-500/20 group-hover:scale-105 transition-transform">
-                  JD
-                </div>
-                <div className="overflow-hidden">
-                  <p className="truncate font-black text-sm text-white">{user?.name || 'John Doe'}</p>
-                  <p className="truncate text-[10px] font-bold text-slate-500 uppercase tracking-tighter">2247116</p>
-                </div>
-              </div>
-              <ChevronRight size={16} className="text-slate-500 group-hover:text-white transition-colors" />
-            </div>
-          ) : (
-            <Link
-              to="/profile"
-              className="flex items-center gap-3 px-4 py-3 mb-2 text-base text-gray-400 hover:bg-[#1E3A5F] rounded-lg transition-all cursor-pointer group nav-item"
-            >
-              <div className="w-10 h-10 rounded-full bg-[#1E3A5F] flex items-center justify-center text-[#D4AF37] font-bold text-lg group-hover:bg-[#0F2540] transition-all border-2 border-transparent group-hover:border-[#D4AF37] hover-scale">
-                {user?.name?.charAt(0) || 'U'}
-              </div>
-              <div className="overflow-hidden">
-                <p className="truncate font-bold text-lg text-white group-hover:text-[#D4AF37] transition-all">{user?.name || 'User'}</p>
-                <p className="truncate text-sm text-gray-300">View Profile</p>
-              </div>
-            </Link>
-          )}
-          <button onClick={handleLogout} className="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-900/20 w-full rounded-lg transition-colors text-base font-medium mt-2">
-            <LogOut size={20} />
-            <span>Sign Out</span>
+        <div className="p-6">
+          <button
+            onClick={handleLogout}
+            className={`flex items-center justify-center gap-3 px-4 py-3 w-full rounded-xl transition-all text-xs font-bold uppercase tracking-widest ${isPlacement
+              ? "bg-[#E25C44] text-white hover:bg-[#D14B35] shadow-lg shadow-orange-950/20"
+              : "text-rose-400 hover:bg-rose-500/10"
+              }`}
+          >
+            {isPlacement ? <LogOut size={16} /> : <LogOut size={18} />}
+            <span>{isPlacement ? 'Logout Placement' : 'Sign Out Profile'}</span>
           </button>
         </div>
       </aside>

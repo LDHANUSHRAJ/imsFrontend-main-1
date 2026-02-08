@@ -1,7 +1,7 @@
 import React from 'react';
 import { cn } from '../../utils/cn';
 
-export type BadgeVariant = 'success' | 'warning' | 'error' | 'neutral' | 'info' | 'navy' | 'outline';
+export type BadgeVariant = 'success' | 'warning' | 'error' | 'neutral' | 'info' | 'navy' | 'outline' | 'gold';
 
 interface BadgeProps {
     children: React.ReactNode;
@@ -27,6 +27,8 @@ const Badge = ({ children, variant = 'neutral', className }: BadgeProps) => {
         info: 'bg-blue-50 text-[#3B82F6] border-blue-100',
         // Brand Highlight
         navy: 'bg-[#0F2137]/10 text-[#0F2137] border-[#0F2137]/20',
+        // Gold / Premium
+        gold: 'bg-[#D4AF37]/10 text-[#B8860B] border-[#D4AF37]/30',
         // Minimal Outline
         outline: 'bg-transparent text-slate-400 border-slate-200',
     };

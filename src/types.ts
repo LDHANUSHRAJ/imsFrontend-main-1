@@ -3,7 +3,7 @@ export interface User {
     id: string;
     name: string;
     email: string;
-    role: 'FACULTY' | 'CORPORATE' | 'PLACEMENT' | 'STUDENT' | 'ADMIN' | 'PROGRAMME_COORDINATOR' | 'PLACEMENT_HEAD' | 'HOD';
+    role: 'FACULTY' | 'CORPORATE' | 'PLACEMENT' | 'STUDENT' | 'ADMIN' | 'PROGRAMME_COORDINATOR' | 'PLACEMENT_HEAD' | 'HOD' | 'RECRUITER' | 'PLACEMENT_OFFICE' | 'IC';
     company_name?: string | null;
     hr_name?: string | null;
     department_id?: string | null;
@@ -266,26 +266,9 @@ export interface InternshipInfo {
     title: string;
 }
 
-export interface ExternalInternshipInfo {
-    id: string;
-    company_name: string;
-    position: string;
-}
-
 export interface StudentBasicInfo {
     name: string;
     email: string;
-}
-
-export interface ExternalInternshipResponse {
-    id: string;
-    student_id: string;
-    student?: StudentBasicInfo | null;
-    company_name: string;
-    position: string;
-    offer_letter_url: string;
-    status: string;
-    created_at: string;
 }
 
 export interface WeeklyReportCreate {
@@ -296,7 +279,6 @@ export interface WeeklyReportCreate {
     challenges?: string | null;
     plans?: string | null;
     internship_id?: string | null;
-    external_internship_id?: string | null;
 }
 
 export interface WeeklyReportResponse {
@@ -308,9 +290,7 @@ export interface WeeklyReportResponse {
     challenges?: string | null;
     plans?: string | null;
     internship_id?: string | null;
-    external_internship_id?: string | null;
     student_id: string;
     submitted_at: string;
     internship?: InternshipInfo | null;
-    external_internship?: ExternalInternshipInfo | null;
 }

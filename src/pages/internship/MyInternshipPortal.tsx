@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
-    FileText, Plus, X
+    FileText, Plus, X,
+    Upload, CheckCircle, Download
 } from 'lucide-react';
 import Button from '../../components/ui/Button';
 import Input from '../../components/ui/Input';
@@ -36,8 +37,6 @@ const MyInternshipPortal = () => {
             const status = await InternshipService.getPlacementStatus();
             if (status && status.internship) {
                 setInternship(status.internship);
-            } else if (status && status.external_internship) {
-                setInternship(status.external_internship);
             }
 
             const myReports = await InternshipService.getMyReports();
@@ -95,7 +94,7 @@ const MyInternshipPortal = () => {
 
             {/* Tabs */}
             <div className="flex gap-8 border-b border-slate-200">
-                {['Current Internship', 'Logs'].map((tab) => (
+                {['Current Internship', 'Logs', 'Closure'].map((tab) => (
                     <button
                         key={tab}
                         onClick={() => setActiveTab(tab.split(' ')[0] as any)}
@@ -167,6 +166,106 @@ const MyInternshipPortal = () => {
                                 </div>
                             ))
                         )}
+                    </div>
+                )}
+
+                {activeTab === 'Closure' && (
+                    <div className="space-y-8 animate-in fade-in duration-500">
+                        <div className="bg-white rounded-[32px] p-10 border border-slate-100 shadow-sm">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-8 mb-10">
+                                <div className="space-y-2">
+                                    <div className="inline-flex items-center gap-2 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest">
+                                        <CheckCircle size={12} /> Eligible for Graduation Credits
+                                    </div>
+                                    <h2 className="text-3xl font-black text-[#0F172A]">Internship Closure</h2>
+                                    <p className="text-slate-500 font-medium">Complete your final requirements to receive the completion certificate.</p>
+                                </div>
+                                <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100 text-center min-w-[180px]">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Status</p>
+                                    <p className="text-xl font-black text-blue-600 uppercase tracking-tighter">In Progress</p>
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                <div className="space-y-6">
+                                    <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-blue-600">
+                                                <Upload size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Completion Certificate</h4>
+                                                <p className="text-xs text-slate-400 font-bold">PDF or Image (Max 5MB)</p>
+                                            </div>
+                                        </div>
+                                        <div className="relative">
+                                            <input
+                                                type="file"
+                                                className="hidden"
+                                                id="cert-upload"
+                                                accept=".pdf,.jpg,.jpeg,.png"
+                                            />
+                                            <label
+                                                htmlFor="cert-upload"
+                                                className="w-full h-16 bg-white border-2 border-dashed border-slate-200 rounded-2xl flex items-center justify-center gap-3 text-slate-400 font-bold text-xs uppercase cursor-pointer hover:border-blue-400 hover:text-blue-500 transition-all"
+                                            >
+                                                <Plus size={18} /> Select Final Certificate
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-8 bg-slate-50 rounded-[2rem] border border-slate-100 space-y-6">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-white rounded-2xl shadow-sm flex items-center justify-center text-blue-600">
+                                                <FileText size={20} />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-black text-slate-900 uppercase tracking-tight">Final Reflection Report</h4>
+                                                <p className="text-xs text-slate-400 font-bold">Summarize your learning</p>
+                                            </div>
+                                        </div>
+                                        <textarea
+                                            placeholder="What were your key takeaways from this journey?"
+                                            className="w-full h-32 bg-white border border-slate-200 rounded-2xl p-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none resize-none font-medium"
+                                        ></textarea>
+                                    </div>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="bg-[#0F172A] p-8 rounded-[2rem] text-white space-y-6 shadow-xl shadow-blue-900/10">
+                                        <h4 className="text-xs font-black uppercase tracking-[0.2em] text-blue-400">Closure Checklist</h4>
+                                        <ul className="space-y-4">
+                                            {[
+                                                { label: 'Minimum 8 Weekly Logs Submitted', done: reports.length >= 8 },
+                                                { label: 'Faculty Guide Final Evaluation', done: false },
+                                                { label: 'Completion Certificate Uploaded', done: false },
+                                                { label: 'Internship Feedback Form', done: true },
+                                            ].map((item, idx) => (
+                                                <li key={idx} className="flex items-center gap-3">
+                                                    <div className={`w-5 h-5 rounded-full flex items-center justify-center ${item.done ? 'bg-emerald-500' : 'bg-white/10'}`}>
+                                                        {item.done ? <CheckCircle size={12} /> : <div className="w-1 h-1 bg-white/40 rounded-full" />}
+                                                    </div>
+                                                    <span className={`text-xs font-bold ${item.done ? 'text-white' : 'text-slate-400'}`}>{item.label}</span>
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-4 rounded-xl uppercase tracking-widest text-[10px] mt-4">
+                                            Submit for Final Approval
+                                        </Button>
+                                    </div>
+
+                                    <div className="bg-slate-50 p-8 rounded-[2rem] border border-slate-100 flex items-center gap-5">
+                                        <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-slate-400">
+                                            <Download size={24} />
+                                        </div>
+                                        <div>
+                                            <h4 className="text-sm font-black text-slate-400 uppercase tracking-tight">IMS Certificate</h4>
+                                            <p className="text-[10px] text-slate-300 font-bold uppercase tracking-widest italic">Locked until approval</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

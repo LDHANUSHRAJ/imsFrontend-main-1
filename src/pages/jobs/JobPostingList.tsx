@@ -41,7 +41,7 @@ const JobPostingList = () => {
         setLoading(true);
         try {
             let data: Internship[] = [];
-            if (user?.role === 'RECRUITER') {
+            if (user?.role === 'RECRUITER' || user?.role === 'CORPORATE') {
                 data = await InternshipService.getMyInternships();
             } else if (user?.role === 'IC' || user?.role === 'HOD') {
                 const pending = await InternshipService.getPendingInternships();

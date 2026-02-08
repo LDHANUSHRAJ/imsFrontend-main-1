@@ -32,15 +32,16 @@ export const AuthService = {
     // Or maybe just store the token.
 
     updateProfile: async (data: Partial<User>): Promise<User> => {
-        // Simulate API call
-        // const response = await api.put<User>("/auth/profile", data);
-        // return response.data;
-
-        // Mock response for now
+        // ... same mock implementation
         return new Promise((resolve) => {
             setTimeout(() => {
                 resolve({ ...data } as User);
             }, 500);
         });
+    },
+
+    getCurrentUser: async (): Promise<User> => {
+        const response = await api.get<User>("/auth/me");
+        return response.data;
     }
 };

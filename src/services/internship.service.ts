@@ -27,47 +27,12 @@ export const InternshipService = {
         return response.data;
     },
 
-    getExternalPending: async (): Promise<any[]> => {
-        const response = await api.get<any[]>("/internships/external/pending");
+    getById: async (id: string): Promise<Internship> => {
+        const response = await api.get<Internship>(`/internships/${id}`);
         return response.data;
     },
 
-    // ... (close, delete, update, getById methods remain same)
-
-    // ... (application methods)
-
-    // Note: 'getPendingOfferLetters' was not in user list. 
-    // We assume 'getPendingInternships' covers system offers pending approval.
-    // Keeping this distinct if we need to fetch applications specifically, 
-    // but for CustomApprovals page, we likely want getPendingInternships.
-
-    // External Internships
-    submitExternal: async (data: { company_name: string; position: string; offer_letter: File }): Promise<ExternalInternshipResponse> => {
-        const formData = new FormData();
-        formData.append('company_name', data.company_name);
-        formData.append('position', data.position);
-        formData.append('offer_letter', data.offer_letter);
-
-        const response = await api.post<ExternalInternshipResponse>("/internships/external", formData, {
-            headers: { 'Content-Type': 'multipart/form-data' }
-        });
-        return response.data;
-    },
-
-    getMyExternalInternships: async (): Promise<ExternalInternshipResponse[]> => {
-        const response = await api.get<ExternalInternshipResponse[]>("/internships/external/my");
-        return response.data;
-    },
-
-    approveExternal: async (id: string): Promise<any> => {
-        const response = await api.post(`/internships/external/${id}/approve`);
-        return response.data;
-    },
-
-    rejectExternal: async (id: string): Promise<any> => {
-        const response = await api.post(`/internships/external/${id}/reject`);
-        return response.data;
-    },
+    // --- Student Application Methods ---
 
     // Weekly Reports
     submitWeeklyReport: async (data: WeeklyReportCreate): Promise<WeeklyReportResponse> => {
@@ -181,12 +146,17 @@ export const InternshipService = {
     },
 
     approve: async (id: string): Promise<Internship> => {
-        const response = await api.post<Internship>(`/internships/${id}/approve`); // Fixed endpoint based on openapi.json
+        const response = await api.post<Internship>(`/internships/${id}/approve`);
+        return response.data;
+    },
+
+    close: async (id: string): Promise<Internship> => {
+        const response = await api.post<Internship>(`/internships/${id}/close`);
         return response.data;
     },
 
     reject: async (id: string): Promise<Internship> => {
-        const response = await api.post<Internship>(`/internships/${id}/reject`); // Fixed endpoint based on openapi.json
+        const response = await api.post<Internship>(`/internships/${id}/reject`);
         return response.data;
     },
 
@@ -214,11 +184,9 @@ export const InternshipService = {
 import type {
     Internship,
     InternshipCreate,
-    InternshipUpdate,
     StudentApplication,
     WeeklyLog,
     InternshipCompletion,
-    ExternalInternshipResponse,
     WeeklyReportCreate,
     WeeklyReportResponse
 } from "../types";
