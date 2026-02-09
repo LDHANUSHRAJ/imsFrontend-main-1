@@ -1,13 +1,15 @@
-
 import { useAuth } from '../context/AuthContext';
-import ICDashboard from './dashboards/ICDashboard';
-// Assuming other dashboards are imported similarly
-import GuideDashboard from './guides/GuideDashboard';
-import HODDashboard from './dashboards/HODDashboard';
-import RecruiterDashboard from './dashboards/RecruiterDashboard';
+
+// Dashboards for 5 Roles
+import PlacementHeadDashboard from './dashboards/PlacementHeadDashboard';
+import PlacementOfficerDashboard from './dashboards/PlacementOfficerDashboard';
+import CoordinatorDashboard from './dashboards/CoordinatorDashboard';
+import FacultyDashboard from './dashboards/FacultyDashboard';
 import StudentDashboard from './dashboards/StudentDashboard';
 
-import PlacementOfficeDashboard from './dashboards/PlacementOfficeDashboard';
+// Other Imports
+import HODDashboard from './dashboards/HODDashboard';
+import RecruiterDashboard from './dashboards/RecruiterDashboard';
 
 const Dashboard = () => {
     const { user } = useAuth();
@@ -17,14 +19,16 @@ const Dashboard = () => {
     // Component mapping strictly following Part B, C, E, F flows
     switch (user.role) {
         case 'PROGRAMME_COORDINATOR':
-            return <ICDashboard />;
-        case 'PLACEMENT_HEAD':
+            return <CoordinatorDashboard />; // Separated Dashboard
+        case 'PLACEMENT_OFFICE':
         case 'PLACEMENT':
-            return <PlacementOfficeDashboard />;
+            return <PlacementOfficerDashboard />; // Separated Dashboard (Internship Approvals)
+        case 'PLACEMENT_HEAD':
+            return <PlacementHeadDashboard />; // Separated Dashboard (Recruiter Approvals)
         case 'HOD':
             return <HODDashboard />;
         case 'FACULTY':
-            return <GuideDashboard />;
+            return <FacultyDashboard />; // Separated Dashboard
         case 'CORPORATE':
         case 'RECRUITER':
             return <RecruiterDashboard />;

@@ -116,7 +116,8 @@ const JobForm = ({ onSubmit, onCancel }: { onSubmit?: any, onCancel?: any }) => 
                 location_type: formData.location_type,
                 is_paid: formData.is_paid,
                 stipend: formData.is_paid && formData.stipend ? formData.stipend : null,
-                duration: formData.duration
+                duration: formData.duration,
+                status: 'PENDING' // Explicitly request PENDING status
             };
 
             const pathParts = location.pathname.split('/');

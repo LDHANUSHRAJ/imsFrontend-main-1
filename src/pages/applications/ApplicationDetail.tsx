@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ApplicationService } from '../../services/mock/ApplicationService';
+import { ApplicationService } from '../../services/application.service';
 import { useAuth } from '../../context/AuthContext';
 import {
     User, FileText, Download,
@@ -79,7 +79,7 @@ const ApplicationDetail = () => {
             return;
         }
 
-        await ApplicationService.updateStatus(id!, 'REJECTED');
+        await ApplicationService.updateStatus(id!, 'REJECTED', rejectReason);
         addNotification({
             title: 'Decision Recorded',
             message: 'Application status updated and student notified.',

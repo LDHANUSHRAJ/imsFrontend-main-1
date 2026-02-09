@@ -26,9 +26,10 @@ export interface WeeklyReport {
 export interface ActiveInternship {
     id: string;
     title: string;
-    company_name?: string;
+    company_name: string;
     type: 'INTERNAL' | 'EXTERNAL';
-    status: string;
+    status?: string;
+    credits?: number; // Track if credits have been authorized
 }
 
 export interface WeeklyReportCreate {
@@ -45,12 +46,27 @@ export interface WeeklyReportCreate {
 export const ReportService = {
     // Get active internships for reporting
     getActiveInternships: async (): Promise<ActiveInternship[]> => {
-        const response = await api.get<ActiveInternship[]>('/reports/active-internships');
-        return response.data;
+        try {
+            const response = await api.get<any[]>('/reports/active-internships');
+
+            // Map backend response to ActiveInternship format
+            return response.data.map((item: any) => ({
+                id: item.id || item.internship_id,
+                title: item.title || item.internship?.title || 'Internship',
+                company_name: item.company_name || item.internship?.corporate?.company_name || item.corporate?.company_name || 'Company',
+                type: item.type || (item.is_external ? 'EXTERNAL' : 'INTERNAL'),
+                status: item.status,
+                credits: item.credits || item.credit_points // Map credits from backend
+            }));
+        } catch (error) {
+            console.error('Error fetching active internships:', error);
+            return [];
+        }
     },
 
     // Submit a new weekly report
     submitReport: async (data: WeeklyReportCreate): Promise<WeeklyReport> => {
+        console.log('Submitting report with data:', data);
         const response = await api.post<WeeklyReport>('/reports/', data);
         return response.data;
     },

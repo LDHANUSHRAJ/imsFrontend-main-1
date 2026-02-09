@@ -110,7 +110,7 @@ const LandingPage = () => {
 
                         {/* Recruiter Card */}
                         <Link
-                            to="/login/recruiter"
+                            to="/login/corporate"
                             className="group relative bg-white rounded-2xl p-8 shadow-lg hover:shadow-2xl transition-all duration-300 border-2 border-transparent hover:border-[#D4AF37] overflow-hidden hover-lift"
                         >
                             {/* Background gradient on hover */}

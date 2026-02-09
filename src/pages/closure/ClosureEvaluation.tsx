@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ClosureService, type ClosureRecord } from '../../services/mock/ClosureService';
+import { ClosureService, type ClosureRecord } from '../../services/closure.service';
 import {
     FileCheck, Briefcase, User, UserCheck,
     Star, Download, ClipboardCheck, Award

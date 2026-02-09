@@ -13,6 +13,7 @@ export default function StudentDetailsPage() {
     const navigate = useNavigate();
     const [student, setStudent] = useState<StudentProfileExtended | null>(null);
     const [logs, setLogs] = useState<WeeklyLog[]>([]);
+    const [completionData, setCompletionData] = useState<any>(null); // Store completion certificate data
     const [activeTab, setActiveTab] = useState<'logs' | 'evaluation'>('logs');
     const [isLoading, setIsLoading] = useState(true);
 
@@ -25,12 +26,25 @@ export default function StudentDetailsPage() {
     const loadData = async (studentId: string) => {
         setIsLoading(true);
         try {
-            const [profile, logData] = await Promise.all([
+            const [profile, logData, studentDetails] = await Promise.all([
                 GuideService.getStudentProfile(studentId),
-                GuideService.getStudentLogs(studentId)
+                GuideService.getStudentLogs(studentId),
+                GuideService.getStudentDetailsForEvaluation(studentId).catch(() => null)
             ]);
             setStudent(profile);
             setLogs(logData);
+
+            // Extract completion certificate info
+            if (studentDetails) {
+                console.log('Student details for evaluation:', studentDetails);
+                setCompletionData({
+                    completion_letter_url: studentDetails.completion_letter_url ||
+                        studentDetails.application?.completion_letter_url ||
+                        studentDetails.external_internship?.completion_letter_url,
+                    internship_id: studentDetails.internship_id,
+                    internship_type: studentDetails.internship_type
+                });
+            }
         } catch (error) {
             console.error("Failed to load student details", error);
         } finally {
@@ -157,7 +171,12 @@ export default function StudentDetailsPage() {
                     <div className="bg-slate-50 p-3 rounded-lg border border-slate-100">
                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-1">Duration</span>
                         <div className="flex items-center gap-2 font-semibold text-[#0F2137]">
-                            <Calendar size={18} className="text-emerald-500" /> {student.startDate} - {student.endDate}
+                            <Calendar size={18} className="text-emerald-500" />
+                            {student.startDate !== 'N/A' && student.endDate !== 'N/A'
+                                ? `${student.startDate} - ${student.endDate}`
+                                : student.duration
+                                    ? `${student.duration} months`
+                                    : 'N/A'}
                         </div>
                     </div>
                 </div>
@@ -232,25 +251,42 @@ export default function StudentDetailsPage() {
                             <>
                                 <div className="grid md:grid-cols-2 gap-6">
                                     <div className="bg-white p-6 rounded-xl border border-slate-200">
-                                        <h3 className="font-bold text-[#0F2137] mb-4">Final Report</h3>
-                                        <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 mb-4">
-                                            <div className="flex items-center gap-3">
-                                                <FileText className="text-red-500" size={24} />
-                                                <div>
-                                                    <p className="text-sm font-bold text-slate-700">Internship_Final_Report.pdf</p>
-                                                    <p className="text-xs text-slate-400">2.4 MB • Submitted 2 days ago</p>
+                                        <h3 className="font-bold text-[#0F2137] mb-4">Completion Certificate</h3>
+                                        {completionData?.completion_letter_url ? (
+                                            <>
+                                                <div className="flex items-center justify-between p-4 bg-slate-50 rounded-lg border border-slate-200 mb-4">
+                                                    <div className="flex items-center gap-3">
+                                                        <FileText className="text-red-500" size={24} />
+                                                        <div>
+                                                            <p className="text-sm font-bold text-slate-700">Completion Certificate</p>
+                                                            <p className="text-xs text-slate-400">Uploaded by student</p>
+                                                        </div>
+                                                    </div>
+                                                    <a
+                                                        href={completionData.completion_letter_url}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-blue-600 hover:text-blue-700 font-bold text-sm px-4 py-2 rounded-lg border border-blue-200 hover:bg-blue-50 transition-colors"
+                                                    >
+                                                        Download
+                                                    </a>
                                                 </div>
+                                                <p className="text-sm text-slate-600 mb-4">
+                                                    Please review the completion certificate before providing your evaluation.
+                                                </p>
+                                            </>
+                                        ) : (
+                                            <div className="p-4 bg-slate-50 rounded-lg border border-dashed border-slate-300 text-center">
+                                                <FileText className="mx-auto h-10 w-10 text-slate-300 mb-2" />
+                                                <p className="text-sm text-slate-500">No completion certificate uploaded yet</p>
                                             </div>
-                                            <Button variant="ghost" size="sm">Download</Button>
-                                        </div>
-                                        <p className="text-sm text-slate-600 mb-4">
-                                            Please review the final report thoroughly before providing your evaluation.
-                                        </p>
+                                        )}
 
                                         <div className="pt-4 border-t border-slate-100 flex gap-3">
                                             <Button
                                                 className="bg-green-600 hover:bg-green-700 text-white flex-1"
                                                 onClick={() => handleInternshipApproval(true)}
+                                                disabled={!completionData?.completion_letter_url}
                                             >
                                                 Approve Completion
                                             </Button>

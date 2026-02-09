@@ -1,9 +1,24 @@
 import api from "./api";
+import type {
+    Internship,
+    InternshipCreate,
+    StudentApplication,
+    WeeklyLog,
+    InternshipCompletion,
+    WeeklyReportCreate,
+    WeeklyReportResponse,
+    PlacementHeadStats
+} from "../types";
 
 export const InternshipService = {
     // Basic CRUD
     create: async (data: InternshipCreate): Promise<Internship> => {
         const response = await api.post<Internship>("/internships", data);
+        return response.data;
+    },
+
+    update: async (id: string, data: Partial<InternshipCreate>): Promise<Internship> => {
+        const response = await api.patch<Internship>(`/internships/${id}`, data);
         return response.data;
     },
 
@@ -18,17 +33,163 @@ export const InternshipService = {
     },
 
     getApprovedInternships: async (): Promise<Internship[]> => {
-        const response = await api.get<Internship[]>("/internships/approved");
+        // For Placement Head: GET /admin/internships?status=APPROVED
+        const response = await api.get<Internship[]>("/admin/internships", {
+            params: { status: 'APPROVED' }
+        });
         return response.data;
     },
 
     getPendingInternships: async (): Promise<Internship[]> => {
-        const response = await api.get<Internship[]>("/internships/pending");
+        // For Placement Head: GET /admin/internships?status=PENDING  
+        const response = await api.get<Internship[]>("/admin/internships", {
+            params: { status: 'PENDING' }
+        });
         return response.data;
+    },
+
+    getCoordinatorPendingInternships: async (): Promise<Internship[]> => {
+        // For Placement Coordinator: GET /internships/pending (Accessible to non-admin)
+        const response = await api.get<any[]>("/internships/pending");
+        // Handle wrapped response if necessary
+        // Handle wrapped response if necessary
+        const data = response.data;
+        console.log("Coordinator Pending Internships Response:", data);
+        if (Array.isArray(data)) return data;
+        // @ts-ignore
+        return data?.data || data?.internships || data?.pending_internships || [];
     },
 
     getById: async (id: string): Promise<Internship> => {
         const response = await api.get<Internship>(`/internships/${id}`);
+        return response.data;
+    },
+
+    getPlacementHeadStats: async (): Promise<PlacementHeadStats> => {
+        try {
+            // 1. Try fetching ready-made stats from Admin endpoint
+            console.log("Fetching stats from /admin/stats...");
+            const response = await api.get<any>("/admin/stats");
+            const data = response.data?.data || response.data?.stats || response.data;
+
+            // Check if we got meaningful numbers (at least one non-zero or existing object)
+            const hasData = data && (data.total_internships > 0 || data.totalInternships > 0 || Object.keys(data.internships_by_status || {}).length > 0);
+
+            if (hasData) {
+                console.log("Using server-side stats:", data);
+                return {
+                    total_users: data.total_users || data.totalUsers || 0,
+                    total_internships: data.total_internships || data.totalInternships || 0,
+                    corporate_count: data.corporate_count || data.corporateCount || 0,
+                    total_placed: data.total_placed || data.totalPlaced || 0,
+                    pending_reviews: data.pending_reviews || data.pendingReviews || 0,
+                    internships_by_status: data.internships_by_status || data.internshipsByStatus || {},
+                    internships_by_dept: data.internships_by_dept || data.internshipsByDept || {}
+                };
+            }
+            throw new Error("Empty stats from server");
+        } catch (error) {
+            console.warn("Stats endpoint failed or empty, calculating manually...", error);
+
+            // 2. Fallback: Calculate manually from lists
+            try {
+                const [approved, pending] = await Promise.all([
+                    InternshipService.getPlacementHeadApprovedInternships(),
+                    InternshipService.getPlacementHeadPendingInternships()
+                ]);
+
+                const all = [...approved, ...pending];
+
+                // Calculate Stats
+                const stats: PlacementHeadStats = {
+                    total_users: 0, // Cannot calculate users from internships
+                    total_internships: all.length,
+                    corporate_count: new Set(all.map(i => i.corporate_id || i.company_name)).size,
+                    total_placed: 0, // Needs student data, leave 0
+                    pending_reviews: pending.length,
+                    internships_by_status: {
+                        'APPROVED': approved.length,
+                        'PENDING': pending.length,
+                        // Add others if we had them
+                    },
+                    internships_by_dept: {}
+                };
+
+                // Group by Department
+                all.forEach(i => {
+                    const dept = i.department?.name || 'Unknown';
+                    stats.internships_by_dept[dept] = (stats.internships_by_dept[dept] || 0) + 1;
+                });
+
+                console.log("Calculated manual stats:", stats);
+                return stats;
+
+            } catch (calcError) {
+                console.error("Manual stats calculation failed", calcError);
+                return {
+                    total_users: 0, total_internships: 0, corporate_count: 0,
+                    total_placed: 0, pending_reviews: 0, internships_by_status: {}, internships_by_dept: {}
+                };
+            }
+        }
+    },
+
+    getPlacementHeadPendingInternships: async (): Promise<Internship[]> => {
+        try {
+            // VERIFIED: /internships/pending
+            const response = await api.get<any[]>("/internships/pending");
+            const data = response.data;
+            if (Array.isArray(data)) return data;
+            // @ts-ignore
+            return data?.data || data?.internships || [];
+        } catch (error) {
+            console.error("Failed to fetch pending internships", error);
+            return [];
+        }
+    },
+
+    getPlacementHeadApprovedInternships: async (): Promise<Internship[]> => {
+        try {
+            // VERIFIED: /internships/approved
+            const response = await api.get<any[]>("/internships/approved");
+            const data = response.data;
+            if (Array.isArray(data)) return data;
+            // @ts-ignore
+            return data?.data || data?.internships || [];
+        } catch (error) {
+            console.error("Failed to fetch approved internships", error);
+            return [];
+        }
+    },
+
+    approveInternshipGlobal: async (id: string): Promise<any> => {
+        // VERIFIED: /internships/{id}/approve
+        const response = await api.post(`/internships/${id}/approve`);
+        return response.data;
+    },
+
+    rejectInternshipGlobal: async (id: string, reason?: string): Promise<any> => {
+        // VERIFIED: /internships/{id}/reject
+        const response = await api.post(`/internships/${id}/reject`, null, {
+            params: { reason }
+        });
+        return response.data;
+    },
+
+    // --- External / Self-Placed Internships ---
+
+    getExternalPending: async (): Promise<any[]> => {
+        const response = await api.get<any[]>("/internships/external/pending");
+        return response.data;
+    },
+
+    approveExternal: async (id: string): Promise<any> => {
+        const response = await api.post(`/internships/external/${id}/approve`);
+        return response.data;
+    },
+
+    rejectExternal: async (id: string): Promise<any> => {
+        const response = await api.post(`/internships/external/${id}/reject`);
         return response.data;
     },
 
@@ -151,7 +312,7 @@ export const InternshipService = {
     },
 
     close: async (id: string): Promise<Internship> => {
-        const response = await api.post<Internship>(`/internships/${id}/close`);
+        const response = await api.patch<Internship>(`/internships/${id}`, { status: 'CLOSED' });
         return response.data;
     },
 
@@ -178,15 +339,35 @@ export const InternshipService = {
     getCompletionStatus: async (internshipId: string): Promise<InternshipCompletion> => {
         const response = await api.get<InternshipCompletion>(`/internships/${internshipId}/completion`);
         return response.data;
+    },
+
+    completeInternship: async (applicationId: string, file: File): Promise<any> => {
+        const formData = new FormData();
+        formData.append('completion_letter', file);
+        const response = await api.post(`/internships/applications/${applicationId}/complete`, formData);
+        return response.data;
+    },
+
+    completeExternalInternship: async (externalId: string, file: File): Promise<any> => {
+        const formData = new FormData();
+        formData.append('file', file); // Changed from 'completion_letter' to 'file'
+        const response = await api.post(`/internships/external/${externalId}/complete`, formData, {
+            headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        return response.data;
+    },
+
+    // Admin/Placement Coordinator Methods for Internal Internship Approval
+    approveInternship: async (id: string): Promise<any> => {
+        // For Placement Coordinator: POST /admin/internships/{id}/approve
+        const response = await api.post(`/admin/internships/${id}/approve`);
+        return response.data;
+    },
+
+    rejectInternship: async (id: string): Promise<any> => {
+        // For Placement Coordinator: POST /admin/internships/{id}/reject
+        const response = await api.post(`/admin/internships/${id}/reject`);
+        return response.data;
     }
 };
 
-import type {
-    Internship,
-    InternshipCreate,
-    StudentApplication,
-    WeeklyLog,
-    InternshipCompletion,
-    WeeklyReportCreate,
-    WeeklyReportResponse
-} from "../types";

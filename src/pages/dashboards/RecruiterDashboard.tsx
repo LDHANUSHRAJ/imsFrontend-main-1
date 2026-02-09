@@ -4,39 +4,34 @@ import { useNavigate } from 'react-router-dom';
 import { Briefcase, Users, MessageSquare, PlusCircle, Search, User, Edit, Eye } from 'lucide-react';
 import StatCard from '../../components/ui/StatCard';
 import Button from '../../components/ui/Button';
-import RecruiterStatsChart from '../../components/charts/RecruiterStatsChart';
+
 import { InternshipService } from '../../services/internship.service';
 import type { Internship } from '../../types';
 import { useNotifications } from '../../context/NotificationContext';
 import { useAuth } from '../../context/AuthContext';
-import { RecruiterService } from '../../services/mock/RecruiterService';
+import { RecruiterService } from '../../services/recruiter.service';
 import { Lock } from 'lucide-react';
 import type { StudentApplication } from '../../types';
-import Badge from '../../components/ui/Badge';
 
 const RecruiterDashboard = () => {
     const navigate = useNavigate();
     const { user } = useAuth();
     const [myInternships, setMyInternships] = useState<Internship[]>([]);
     const [allApplications, setAllApplications] = useState<StudentApplication[]>([]);
-    const [topApplicants, setTopApplicants] = useState<StudentApplication[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isBanned, setIsBanned] = useState(false);
 
     useEffect(() => {
-        const checkBanStatus = async () => {
-            if (user?.email) {
-                const recruiters = await RecruiterService.getAll();
-                const me = recruiters.find((r: any) => r.email === user.email);
-                if (me && !me.isActive) {
-                    setIsBanned(true);
-                }
-            }
-        };
-        checkBanStatus();
+        // Ban check removed as it required admin privileges. 
+        // Assuming active if logged in, or handled by backend 403s.
         loadInternships();
-        loadApplications();
     }, [user]);
+
+    useEffect(() => {
+        if (myInternships.length > 0) {
+            loadApplications();
+        }
+    }, [myInternships]);
 
     const loadInternships = async () => {
         try {
@@ -48,35 +43,20 @@ const RecruiterDashboard = () => {
     };
 
     const loadApplications = async () => {
+        setIsLoading(true);
         try {
-            // Try aggregate fetch first
-            try {
-                const [apps, top] = await Promise.all([
-                    InternshipService.getApplicationsByRecruiter(),
-                    InternshipService.getTopApplicants(5)
-                ]);
-                setAllApplications(apps || []);
-                setTopApplicants(top || []);
-                setIsLoading(false);
-                return;
-            } catch (aggregateError: any) {
-                if (aggregateError.response?.status !== 404) {
-                    throw aggregateError;
-                }
-                console.warn("Aggregate recruiter endpoints not found, falling back to per-internship fetch");
-            }
+            // Fetch applications for each internship
+            const appPromises = myInternships.map(internship =>
+                InternshipService.getApplications(internship.id)
+                    .catch(err => {
+                        console.warn(`Failed to fetch apps for ${internship.id}`, err);
+                        return [];
+                    })
+            );
 
-            // Fallback: Fetch applications for each of the recruiter's internships
-            const myJobs = await InternshipService.getMyInternships();
-            const appPromises = myJobs.map(job => InternshipService.getApplications(job.id));
             const results = await Promise.all(appPromises);
-            const flatApps = results.flat();
-
-            setAllApplications(flatApps);
-            // Simple top applicants fallback: sort by CGPA if available
-            const sorted = [...flatApps].sort((a, b) => (b.student?.cgpa || 0) - (a.student?.cgpa || 0));
-            setTopApplicants(sorted.slice(0, 5));
-
+            const allApps = results.flat();
+            setAllApplications(allApps);
         } catch (error) {
             console.error("Failed to load applications", error);
         } finally {
@@ -173,58 +153,9 @@ const RecruiterDashboard = () => {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 dashboard-table">
-                {/* Chart Section */}
-                <RecruiterStatsChart data={[]} />
 
-                {/* AI TOP APPLICANTS SECTION */}
-                <div className="space-y-4">
-                    <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                            <h2 className="text-lg font-bold text-[#0F2137]">Top Applicants</h2>
-                            <Badge variant="info" className="bg-blue-600 text-white border-none px-2 py-0">AI Recommended</Badge>
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={() => navigate('/applications')} className="text-xs">View All</Button>
-                    </div>
 
-                    <div className="space-y-3">
-                        {isLoading ? (
-                            Array(3).fill(0).map((_, i) => (
-                                <div key={i} className="h-24 bg-slate-100 rounded-xl animate-pulse" />
-                            ))
-                        ) : topApplicants.length > 0 ? (
-                            topApplicants.map((app) => (
-                                <div
-                                    key={app.id}
-                                    className="bg-white p-4 rounded-xl border border-slate-200 hover:border-blue-500/30 hover:shadow-md transition-all cursor-pointer group"
-                                    onClick={() => navigate(`/applications/${app.id}`)}
-                                >
-                                    <div className="flex justify-between items-start">
-                                        <div className="flex gap-4">
-                                            <div className="w-10 h-10 bg-slate-50 rounded-full flex items-center justify-center text-[#0F2137] font-bold border border-slate-100 group-hover:bg-blue-50 transition-colors">
-                                                {app.student?.name?.substring(0, 1)}
-                                            </div>
-                                            <div>
-                                                <h4 className="font-bold text-sm text-[#0F172A] group-hover:text-blue-600 transition-colors">{app.student?.name}</h4>
-                                                <div className="flex items-center gap-2 mt-0.5">
-                                                    <span className="text-[10px] font-black text-blue-600 uppercase tracking-tighter">CGPA: {app.student?.cgpa?.toFixed(2)}</span>
-                                                    <span className="w-1 h-1 rounded-full bg-slate-200" />
-                                                    <span className="text-[10px] font-bold text-slate-400">Match: {app.matchScore}%</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="bg-emerald-50 text-emerald-700 text-[10px] font-black px-2 py-1 rounded-lg border border-emerald-100 italic">
-                                            {app.aiReasoning?.split('.')[0] + '.'}
-                                        </div>
-                                    </div>
-                                </div>
-                            ))
-                        ) : (
-                            <div className="p-12 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50">
-                                <p className="text-slate-400 text-sm">No recommended applicants yet.</p>
-                            </div>
-                        )}
-                    </div>
-                </div>
+                {/* AI TOP APPLICANTS SECTION REMOVED - Not supported by API */}
 
                 {/* My Recent Postings */}
                 <div className="space-y-4">
@@ -265,7 +196,8 @@ const RecruiterDashboard = () => {
                                     <div className="mb-2 flex items-center justify-between">
                                         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${internship.status === 'APPROVED' ? 'bg-green-100 text-green-700' :
                                             internship.status === 'REJECTED' ? 'bg-red-100 text-red-700' :
-                                                'bg-amber-100 text-amber-700'
+                                                internship.status === 'CLOSED' ? 'bg-slate-100 text-slate-500' :
+                                                    'bg-amber-100 text-amber-700'
                                             }`}>
                                             {internship.status}
                                         </span>

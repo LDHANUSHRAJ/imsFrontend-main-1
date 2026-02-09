@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Archive, CheckCircle, Calendar, Eye } from 'lucide-react';
-import { SessionService } from '../../services/mock/SessionService';
+import { SessionService } from '../../services/session.service';
 import type { InternshipSession } from '../../types';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';

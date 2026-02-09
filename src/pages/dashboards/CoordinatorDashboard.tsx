@@ -6,7 +6,7 @@ import { useAuth } from '../../context/AuthContext';
 // import { AdminService } from '../../services/admin.service'; // Not needed if GuideService handles it
 // import type { User } from '../../types';
 
-const ICDashboard = () => {
+const CoordinatorDashboard = () => {
     const { user, logout } = useAuth(); // Get user to access department_id
     const [students, setStudents] = useState<any[]>([]);
     const [faculty, setFaculty] = useState<any[]>([]);
@@ -219,4 +219,4 @@ const ICDashboard = () => {
     );
 };
 
-export default ICDashboard;
+export default CoordinatorDashboard;

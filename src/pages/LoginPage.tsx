@@ -9,7 +9,7 @@ const LoginPage = () => {
     const { login } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const [role, setRole] = useState<'PROGRAMME_COORDINATOR' | 'HOD' | 'FACULTY' | 'CORPORATE' | 'STUDENT' | 'PLACEMENT' | 'PLACEMENT_HEAD'>('FACULTY');
+    const [role, setRole] = useState<'PROGRAMME_COORDINATOR' | 'HOD' | 'FACULTY' | 'CORPORATE' | 'STUDENT' | 'PLACEMENT_OFFICE' | 'PLACEMENT_HEAD'>('FACULTY');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
@@ -17,7 +17,7 @@ const LoginPage = () => {
     React.useEffect(() => {
         const params = new URLSearchParams(location.search);
         const roleParam = params.get('role');
-        if (roleParam && ['PROGRAMME_COORDINATOR', 'HOD', 'FACULTY', 'CORPORATE', 'STUDENT', 'PLACEMENT', 'PLACEMENT_HEAD'].includes(roleParam)) {
+        if (roleParam && ['PROGRAMME_COORDINATOR', 'HOD', 'FACULTY', 'CORPORATE', 'STUDENT', 'PLACEMENT_OFFICE', 'PLACEMENT_HEAD'].includes(roleParam)) {
             setRole(roleParam as any);
         }
     }, [location]);
@@ -73,11 +73,10 @@ const LoginPage = () => {
                                 className="w-full h-12 pl-4 pr-10 bg-slate-50 border border-slate-200 rounded-lg 
                                          text-slate-700 text-sm font-semibold focus:ring-2 focus:ring-[#0F2540] outline-none transition-all cursor-pointer appearance-none"
                             >
-                                <option value="FACULTY">Faculty Guide / Mentor</option>
-                                <option value="HOD">Head of Department (HOD)</option>
-                                <option value="PROGRAMME_COORDINATOR">Programme Coordinator</option>
-                                <option value="PLACEMENT">Placement Coordinator</option>
                                 <option value="PLACEMENT_HEAD">Placement Head</option>
+                                <option value="PLACEMENT_OFFICE">Placement Officer</option>
+                                <option value="PROGRAMME_COORDINATOR">Programme Coordinator</option>
+                                <option value="FACULTY">Faculty / Guide</option>
                             </select>
                             <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none">
                                 <svg className="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
@@ -123,8 +122,8 @@ const LoginPage = () => {
                         </div>
                     </div>
 
-                    {/* Remember Me & Forgot Password */}
-                    <div className="flex items-center justify-between">
+                    {/* Remember Me */}
+                    <div className="flex items-center">
                         <label className="flex items-center gap-2 cursor-pointer group">
                             <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${rememberMe ? 'bg-[#0F2540] border-[#0F2540]' : 'bg-white border-slate-300'}`}>
                                 <input
@@ -137,9 +136,6 @@ const LoginPage = () => {
                             </div>
                             <span className="text-sm text-slate-600 font-medium group-hover:text-[#0F2540]">Remember me</span>
                         </label>
-                        <button type="button" className="text-sm font-bold text-[#0F2540] hover:underline">
-                            Forgot Password?
-                        </button>
                     </div>
 
                     {/* Login Button */}

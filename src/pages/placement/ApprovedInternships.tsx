@@ -2,16 +2,32 @@ import { useState, useEffect } from 'react';
 import { InternshipService } from '../../services/internship.service';
 import { Search, Calendar } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
+import { useAuth } from '../../context/AuthContext';
 
 const ApprovedInternships = () => {
     const [internships, setInternships] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
+    const { user } = useAuth();
 
     useEffect(() => {
         const fetchInternships = async () => {
             try {
-                const data = await InternshipService.getApprovedInternships();
+                let data;
+                if (user?.role === 'PLACEMENT_HEAD') {
+                    try {
+                        data = await InternshipService.getPlacementHeadApprovedInternships();
+                    } catch (headError) {
+                        console.warn("Head API failed, falling back", headError);
+                        data = await InternshipService.getApprovedInternships();
+                    }
+                } else if (user?.role === 'PLACEMENT' || user?.role === 'PLACEMENT_OFFICE') {
+                    // Coordinators use the public approved list to avoid 403 on admin routes
+                    data = await InternshipService.getAll();
+                } else {
+                    data = await InternshipService.getApprovedInternships();
+                }
+                console.log("ApprovedInternships Data:", data);
                 setInternships(data || []);
             } catch (error) {
                 console.error("Failed to fetch approved internships", error);
@@ -21,7 +37,7 @@ const ApprovedInternships = () => {
         };
 
         fetchInternships();
-    }, []);
+    }, [user]);
 
     const filtered = internships.filter(i =>
         i.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -72,11 +88,11 @@ const ApprovedInternships = () => {
                                             <td className="px-6 py-5">
                                                 <div className="flex items-center gap-4">
                                                     <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
-                                                        {item.company_name?.charAt(0) || 'C'}
+                                                        {(item.corporate?.company_name || item.company_name || item.companyName || 'C').charAt(0)}
                                                     </div>
                                                     <div>
-                                                        <p className="font-bold text-[#0F2137]">{item.title || item.position}</p> {/* Handle both title and position */}
-                                                        <p className="text-xs text-slate-500 font-medium">{item.company_name}</p>
+                                                        <p className="font-bold text-[#0F2137]">{item.title || item.position || 'Internship'}</p>
+                                                        <p className="text-xs text-slate-500 font-medium">{item.corporate?.company_name || item.company_name || item.companyName || 'Unknown Company'}</p>
                                                     </div>
                                                 </div>
                                             </td>

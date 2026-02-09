@@ -40,9 +40,9 @@ export const GuideService = {
                 email: data.student?.email || data.email || '',
                 department: data.student?.department || data.department || data.class_name || 'N/A',
                 companyName: data.internship?.corporate?.company_name ||
-                    data.company ||
                     data.external_internship?.company_name ||
                     data.company_name ||
+                    data.company ||
                     'N/A',
                 internshipTitle: data.internship?.position ||
                     data.position ||
@@ -57,7 +57,12 @@ export const GuideService = {
                     data.end_date ||
                     data.external_internship?.end_date ||
                     'N/A',
-                status: data.status || data.internship_status || 'ACTIVE'
+                duration: data.internship?.duration ||
+                    data.external_internship?.duration ||
+                    data.duration ||
+                    null,
+                status: data.status || data.internship_status || 'ACTIVE',
+                logs: [] // Logs are fetched separately via getStudentLogs
             };
 
             console.log("Mapped student profile:", profile);

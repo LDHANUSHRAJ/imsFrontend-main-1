@@ -1,28 +1,45 @@
 import { useState, useEffect } from 'react';
-import { Plus, UserCheck, Shield, Building2, Search, Filter } from 'lucide-react';
-import { RecruiterService } from '../../services/mock/RecruiterService';
+import { UserCheck, Shield, Building2, Search, Filter } from 'lucide-react';
+import { RecruiterService } from '../../services/recruiter.service';
 import { useNotifications } from '../../context/NotificationContext';
 import Button from '../../components/ui/Button';
 import Badge from '../../components/ui/Badge';
 import Table, { TableRow, TableCell } from '../../components/ui/Table';
 import Breadcrumbs from '../../components/ui/Breadcrumbs';
 import Modal from '../../components/ui/Modal';
-import RecruiterForm from './RecruiterForm';
+// RecruiterForm removed
+
+import { useAuth } from '../../context/AuthContext';
+// ... imports
 
 const RecruiterManagement = () => {
     const { addNotification } = useNotifications();
+    const { user } = useAuth();
     const [recruiters, setRecruiters] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    // isModalOpen removed
     const [previewRecruiter, setPreviewRecruiter] = useState<any | null>(null);
 
-    useEffect(() => { loadRecruiters(); }, []);
+    useEffect(() => { loadRecruiters(); }, [user]);
 
     const loadRecruiters = async () => {
         setIsLoading(true);
-        const data = await RecruiterService.getAll();
-        setRecruiters(data);
-        setIsLoading(false);
+        try {
+            let data = [];
+            if (user?.role === 'PLACEMENT_HEAD') {
+                data = await RecruiterService.getGlobalApprovedRecruiters();
+            } else {
+                data = await RecruiterService.getAll(user?.role);
+                // Filter for approved/active only
+                data = data.filter(r => r.isActive || r.status === 'APPROVED');
+            }
+            setRecruiters(data);
+        } catch (error) {
+            console.error("Failed to load recruiters", error);
+            addNotification({ title: 'Error', message: 'Failed to load recruiters', type: 'error' });
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const toggleStatus = async (id: string, currentStatus: boolean, name: string) => {
@@ -47,9 +64,6 @@ const RecruiterManagement = () => {
                     <h1 className="text-2xl font-bold text-[#0F2137]">Corporate Recruiter Management</h1>
                     <p className="text-slate-500 text-sm font-medium mt-1">Manage external partner access and monitor recruitment activities.</p>
                 </div>
-                <Button onClick={() => setIsModalOpen(true)} className="w-auto px-6 gap-2">
-                    <Plus size={18} /> Add Corporate Partner
-                </Button>
             </div>
 
             {/* Filter Bar */}
@@ -74,14 +88,16 @@ const RecruiterManagement = () => {
                                     <div className="h-9 w-9 rounded-lg bg-[#0F2137] flex items-center justify-center text-white">
                                         <Building2 size={18} />
                                     </div>
-                                    <span className="font-bold text-[#0F2137]">{rec.companyName}</span>
+                                    <span className="font-bold text-[#0F2137]">{rec.companyName || 'Unknown Company'}</span>
                                 </div>
                             </TableCell>
                             <TableCell>
-                                <div className="text-sm font-semibold text-slate-700">{rec.name}</div>
-                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{rec.email}</div>
+                                <div className="text-sm font-semibold text-slate-700">{rec.name || 'N/A'}</div>
+                                <div className="text-[10px] font-bold text-slate-400 uppercase tracking-tighter">{rec.email || 'N/A'}</div>
                             </TableCell>
-                            <TableCell className="text-slate-500 font-medium text-xs">{rec.createdAt}</TableCell>
+                            <TableCell className="text-slate-500 font-medium text-xs">
+                                {rec.created_at ? new Date(rec.created_at).toLocaleDateString() : (rec.createdAt || 'N/A')}
+                            </TableCell>
                             <TableCell>
                                 <Badge variant={rec.isActive ? 'success' : 'error'}>
                                     {rec.isActive ? 'Active Access' : 'Banned'}
@@ -129,8 +145,8 @@ const RecruiterManagement = () => {
                                 <Building2 size={32} />
                             </div>
                             <div>
-                                <h2 className="text-xl font-bold text-[#0F2137]">{previewRecruiter.companyName}</h2>
-                                <p className="text-sm text-slate-500">{previewRecruiter.industry}</p>
+                                <h2 className="text-xl font-bold text-[#0F2137]">{previewRecruiter.companyName || 'Unknown Company'}</h2>
+                                <p className="text-sm text-slate-500">{previewRecruiter.industry || 'N/A'}</p>
                                 <Badge variant={previewRecruiter.isActive ? 'success' : 'error'} className="mt-2 text-xs">
                                     {previewRecruiter.isActive ? 'Active Partner' : 'Access Revoked'}
                                 </Badge>
@@ -143,32 +159,22 @@ const RecruiterManagement = () => {
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contact Person</label>
                                     <div className="flex items-center gap-2 mt-1">
                                         <div className="h-8 w-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold text-xs">
-                                            {previewRecruiter.name.charAt(0)}
+                                            {previewRecruiter.name ? previewRecruiter.name.charAt(0) : 'U'}
                                         </div>
-                                        <p className="font-semibold text-slate-700">{previewRecruiter.name}</p>
+                                        <p className="font-semibold text-slate-700">{previewRecruiter.name || 'N/A'}</p>
                                     </div>
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Email Address</label>
-                                    <p className="font-medium text-[#0F2137] mt-1">{previewRecruiter.email}</p>
+                                    <p className="font-medium text-[#0F2137] mt-1">{previewRecruiter.email || 'N/A'}</p>
                                 </div>
                                 <div>
                                     <label className="text-xs font-bold text-slate-400 uppercase tracking-wider">Registered Address</label>
-                                    <p className="text-sm text-slate-600 mt-1 leading-relaxed">{previewRecruiter.address}</p>
+                                    <p className="text-sm text-slate-600 mt-1 leading-relaxed">{previewRecruiter.address || 'N/A'}</p>
                                 </div>
                             </div>
 
-                            <div className="space-y-4 bg-slate-50 p-4 rounded-xl border border-slate-100">
-                                <h3 className="font-bold text-[#0F2137] text-sm mb-2">Recruitment Statistics</h3>
-                                <div className="flex justify-between items-center border-b border-slate-200 pb-2">
-                                    <span className="text-sm text-slate-600">Active Job Postings</span>
-                                    <span className="font-bold text-[#0F2137]">{previewRecruiter.activePostings}</span>
-                                </div>
-                                <div className="flex justify-between items-center pb-2">
-                                    <span className="text-sm text-slate-600">Total Hires</span>
-                                    <span className="font-bold text-emerald-600">{previewRecruiter.hiredCount}</span>
-                                </div>
-                            </div>
+                            {/* Recruitment Statistics Removed - Not provided by API */}
                         </div>
 
                         <div className="flex justify-end pt-4 border-t border-slate-100">
@@ -178,17 +184,7 @@ const RecruiterManagement = () => {
                 </Modal>
             )}
 
-            <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} title="Onboard New Corporate Partner" maxWidth="max-w-2xl">
-                <RecruiterForm
-                    onSubmit={async (data) => {
-                        await RecruiterService.create(data);
-                        setIsModalOpen(false);
-                        addNotification({ title: 'Partner Registered', message: 'Invitation email sent successfully.', type: 'success' });
-                        loadRecruiters();
-                    }}
-                    onCancel={() => setIsModalOpen(false)}
-                />
-            </Modal>
+
         </div>
     );
 };

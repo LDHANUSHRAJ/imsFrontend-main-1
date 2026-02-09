@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import Badge from '../../components/ui/Badge';
 import { InternshipService } from '../../services/internship.service';
+import { ReportService } from '../../services/report.service';
 import type { InternshipCompletion, Internship } from '../../types';
 
 const InternshipCompletionStatus = () => {
@@ -21,11 +22,31 @@ const InternshipCompletionStatus = () => {
     const fetchCompletionData = async () => {
         setIsLoading(true);
         try {
-            // Mock fetching data for the active internship
-            const data = await InternshipService.getCompletionStatus('test-internship-id');
-            const intern = await InternshipService.getById(data.internshipId);
-            setCompletionData(data);
-            setInternship(intern);
+            // Get active internship
+            const activeInternships = await ReportService.getActiveInternships();
+
+            if (activeInternships.length > 0) {
+                const current = activeInternships[0];
+                let internshipId = current.id;
+
+                // If Internal, current.id is Application ID. We need the Internship ID for metrics.
+                if (current.type === 'INTERNAL') {
+                    try {
+                        const applications = await InternshipService.getStudentApplications();
+                        const app = applications.find(a => a.id === current.id);
+                        if (app && app.internship_id) {
+                            internshipId = app.internship_id;
+                        }
+                    } catch (e) {
+                        console.warn("Could not fetch applications to resolve internship ID", e);
+                    }
+                }
+
+                const data = await InternshipService.getCompletionStatus(internshipId);
+                const intern = await InternshipService.getById(internshipId);
+                setCompletionData(data);
+                setInternship(intern);
+            }
         } catch (error) {
             console.error('Failed to fetch completion data:', error);
         } finally {

@@ -16,7 +16,7 @@ export const AuthService = {
         const formData = new URLSearchParams();
         formData.append('username', credentials.username);
         formData.append('password', credentials.password);
-        formData.append('grant_type', credentials.grant_type || 'password');
+        // formData.append('grant_type', credentials.grant_type || 'password'); // Standard OAuth2 usually needs this, but user doc only showed username/password. Keeping it simple or as per standard.
 
         const response = await api.post<AuthResponse>("/auth/login", formData, {
             headers: {
@@ -41,7 +41,7 @@ export const AuthService = {
     },
 
     getCurrentUser: async (): Promise<User> => {
-        const response = await api.get<User>("/auth/me");
+        const response = await api.get<User>("/auth/users/me");
         return response.data;
     }
 };

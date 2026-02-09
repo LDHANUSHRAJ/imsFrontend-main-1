@@ -2,14 +2,18 @@
 
 @theme {
     --color-christBlue: #0B2C5D;
+    --color-christGold: #D4AF37;
     --color-christGray: #F4F6F8;
     --color-success: #2E7D32;
     --color-warning: #ED6C02;
+    --color-error: #D32F2F;
 }
 
 body {
-    font-family: Inter, "Segoe UI", system-ui, sans-serif;
-    @apply bg-christGray text-slate-800;
+    font-family: 'Inter', sans-serif;
+    @apply bg-christGray text-[#0F2137] min-h-screen;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 /* ============================================

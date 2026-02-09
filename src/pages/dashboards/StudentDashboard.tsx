@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-    FileText, CheckCircle, Clock, Briefcase,
+    FileText, Clock, Briefcase,
     ChevronRight, ArrowUpRight,
-    TrendingUp, Star, Building2, User,
+    TrendingUp, Star, Building2,
     FileUp, ClipboardCheck, ListChecks,
-    AlertCircle
+    AlertCircle, CheckCircle, Calendar
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import Badge from '../../components/ui/Badge';
@@ -17,181 +17,182 @@ const StudentDashboard = () => {
     const navigate = useNavigate();
     const [applications, setApplications] = useState<StudentApplication[]>([]);
     const [isLoading, setIsLoading] = useState(true);
-    const [currentTime, setCurrentTime] = useState(new Date());
 
     useEffect(() => {
+        // Check if user is authenticated
+        if (!user) {
+            console.log('No user found, redirecting to login');
+            navigate('/login/student');
+            return;
+        }
+
         const loadDashboardData = async () => {
             setIsLoading(true);
             try {
                 const allApps = await InternshipService.getStudentApplications();
                 setApplications(allApps || []);
-            } catch (error) {
+            } catch (error: any) {
                 console.error("Dashboard data load failed:", error);
+
+                // Handle 401 Unauthorized - redirect to login
+                if (error?.response?.status === 401) {
+                    alert('Your session has expired. Please log in again.');
+                    localStorage.removeItem('imsUser');
+                    navigate('/login/student');
+                    return;
+                }
+
+                // For other errors, just log and show empty state
+                setApplications([]);
             } finally {
                 setIsLoading(false);
             }
         };
         loadDashboardData();
-
-        const timer = setInterval(() => setCurrentTime(new Date()), 60000);
-        return () => clearInterval(timer);
-    }, []);
+    }, [user, navigate]);
 
     const activeInternship = applications.find(app => app.status === 'ACTIVE');
-    const hasOffer = applications.find(app => app.status === 'OFFER_RECEIVED');
-    const hasShortlist = applications.filter(app => app.status === 'SHORTLISTED');
+    const pendingApps = applications.filter(app => app.status === 'SUBMITTED' || app.status === 'PENDING');
+    const shortlistedApps = applications.filter(app => app.status === 'SHORTLISTED');
+
+    const getStatusBadgeVariant = (status: string) => {
+        switch (status) {
+            case 'ACTIVE': return 'success';
+            case 'SHORTLISTED': return 'warning';
+            case 'SUBMITTED': return 'info';
+            case 'REJECTED': return 'error';
+            default: return 'neutral';
+        }
+    };
+
+    // Helper for Stats
+    const StatCard = ({ title, value, icon: Icon, color, bg }: any) => (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 hover:shadow-md transition-all">
+            <div className="flex items-start justify-between">
+                <div>
+                    <p className="text-slate-500 text-sm font-medium">{title}</p>
+                    <h3 className="text-3xl font-bold text-slate-800 mt-2">{value}</h3>
+                </div>
+                <div className={`p-3 rounded-lg ${bg}`}>
+                    <Icon className={color} size={24} />
+                </div>
+            </div>
+        </div>
+    );
 
     return (
-        <div className="min-h-screen bg-[#FDFDFE] p-4 md:p-8 lg:p-12 font-sans selection:bg-[#0B2C5D]/10 selection:text-[#0B2C5D]">
-            {/* TOP BAR / NAVIGATION CONTEXT */}
-            <div className="max-w-7xl mx-auto mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8 border-b border-slate-100 pb-8">
-                <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                        <span className="w-1.5 h-1.5 bg-[#0B2C5D] rounded-full animate-pulse"></span>
-                        <h4 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Student Portal Command</h4>
-                    </div>
-                    <h1 className="text-4xl md:text-5xl font-light text-slate-900 tracking-tight">
-                        Welcome, <span className="font-medium text-[#0B2C5D]">{user?.name?.split(' ')[0]}</span>
-                    </h1>
+        <div className="space-y-8 animate-fade-in-up md:p-6 font-sans">
+            {/* Header */}
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-6">
+                <div>
+                    <h1 className="text-3xl font-bold text-christBlue">My Dashboard</h1>
+                    <p className="text-slate-500 mt-1 font-medium">Track your internship journey</p>
                 </div>
-
-                <div className="flex flex-wrap items-center gap-6">
-                    <div className="text-right">
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Current Session</p>
-                        <p className="text-sm font-semibold text-slate-800">
-                            {currentTime.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
-                        </p>
-                    </div>
-                    <div className="hidden sm:block h-10 w-px bg-slate-100"></div>
-                    <div className="flex items-center gap-4">
-                        <div className="text-right hidden sm:block">
-                            <p className="text-xs font-bold text-[#0B2C5D] uppercase tracking-tighter">{user?.role?.replace('_', ' ')}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">Christ University</p>
-                        </div>
-                        <div className="w-12 h-12 rounded-2xl bg-white shadow-xl shadow-slate-200/50 border border-slate-100 flex items-center justify-center text-slate-400 transform hover:rotate-[8deg] transition-all cursor-pointer">
-                            <User size={22} className="text-[#0B2C5D]" />
-                        </div>
-                    </div>
+                <div className="flex items-center gap-3">
+                    <span className="text-sm font-medium bg-blue-50 text-christBlue px-4 py-2 rounded-full border border-blue-100">
+                        {new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                    </span>
                 </div>
             </div>
 
-            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-10">
-                {/* PRIMARY ACTIONS & STATUS (LEFT COLUMN) */}
-                <div className="lg:col-span-8 space-y-12">
-                    {/* STATUS HERO */}
-                    <div className="relative overflow-hidden bg-white rounded-[2.5rem] border border-slate-200/50 p-8 md:p-12 shadow-2xl shadow-slate-200/30 transition-all hover:shadow-emerald-900/5 group">
-                        <div className="relative z-10 flex flex-col md:flex-row md:items-center gap-12">
-                            <div className="flex-1 space-y-8">
-                                <div className="space-y-4">
-                                    <div className="inline-flex items-center gap-2 bg-[#0B2C5D]/5 px-4 py-1.5 rounded-full">
-                                        <div className={`w-2 h-2 rounded-full ${activeInternship ? 'bg-emerald-500 animate-pulse' : 'bg-amber-400 animate-pulse'}`}></div>
-                                        <span className="text-[11px] font-bold uppercase tracking-widest text-[#0B2C5D]">
-                                            {activeInternship ? 'System Live / Interning' : 'Application Active'}
-                                        </span>
-                                    </div>
-                                    <h2 className="text-2xl md:text-3xl font-light text-slate-900 leading-[1.15] tracking-tight">
-                                        {activeInternship
-                                            ? <span className="block">You are currently placed at <span className="font-semibold text-[#0B2C5D]">{activeInternship.internship?.corporate?.company_name}</span> as a Technical Intern.</span>
-                                            : hasOffer
-                                                ? "Critical: New offer received. Action required within 48 hours for validation."
-                                                : <span className="block">Your profile is currently <span className="font-semibold text-[#0B2C5D]">Shortlisted</span> for {hasShortlist.length} positions. Keep track of your interviews.</span>}
-                                    </h2>
-                                </div>
-                                <div className="flex flex-wrap gap-4 pt-4">
-                                    <button
-                                        onClick={() => navigate('/internships')}
-                                        className="inline-flex items-center gap-3 bg-[#0B2C5D] text-white px-7 py-4 rounded-2xl text-sm font-bold shadow-lg shadow-[#0B2C5D]/20 transition-all hover:bg-[#0F3C7E] hover:scale-105 active:scale-100"
-                                    >
-                                        <Briefcase size={18} /> Opportunity Portal
-                                    </button>
-                                    <button
-                                        onClick={() => navigate('/applications')}
-                                        className="inline-flex items-center gap-3 bg-white text-[#0B2C5D] border-2 border-[#0B2C5D]/10 px-7 py-4 rounded-2xl text-sm font-bold transition-all hover:bg-slate-50 hover:border-[#0B2C5D]/20"
-                                    >
-                                        Active Tracking <ArrowUpRight size={18} />
-                                    </button>
-                                </div>
-                            </div>
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <StatCard
+                    title="Total Applications"
+                    value={applications.length}
+                    icon={FileText}
+                    color="text-blue-600"
+                    bg="bg-blue-50"
+                />
+                <StatCard
+                    title="Pending"
+                    value={pendingApps.length}
+                    icon={Clock}
+                    color="text-amber-600"
+                    bg="bg-amber-50"
+                />
+                <StatCard
+                    title="Shortlisted"
+                    value={shortlistedApps.length}
+                    icon={Star}
+                    color="text-purple-600"
+                    bg="bg-purple-50"
+                />
+                <StatCard
+                    title="Active"
+                    value={activeInternship ? 1 : 0}
+                    icon={CheckCircle}
+                    color="text-emerald-600"
+                    bg="bg-emerald-50"
+                />
+            </div>
 
-                            <div className="shrink-0 w-full md:w-40 lg:w-48 flex flex-col items-center justify-center p-8 bg-slate-50/50 backdrop-blur-sm rounded-[2rem] border border-white/50 shadow-inner">
-                                <span className="text-[10px] font-extrabold text-[#0B2C5D]/40 uppercase tracking-[0.2em] mb-4">Milestone</span>
-                                <div className="text-4xl font-light text-[#0B2C5D] mb-4 tracking-tighter">
-                                    {activeInternship ? '10%' : '0%'}
-                                </div>
-                                <div className="w-full h-1.5 bg-slate-200 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-[#0B2C5D] to-[#2563EB] rounded-full transition-all duration-1000 ease-in-out"
-                                        style={{ width: activeInternship ? '10%' : '0%' }}
-                                    ></div>
-                                </div>
-                                <p className="text-[9px] font-bold text-slate-400 mt-4 uppercase tracking-widest">Phase 1 of 5</p>
+            {/* Content Area */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Main: Recent Applications */}
+                <div className="lg:col-span-2 space-y-6">
+                    {/* Active Internship Card */}
+                    {activeInternship && (
+                        <div className="bg-gradient-to-br from-christBlue to-blue-700 p-6 rounded-xl shadow-lg text-white">
+                            <div className="flex items-center gap-2 mb-4">
+                                <Briefcase size={20} />
+                                <h3 className="text-lg font-bold">Current Internship</h3>
                             </div>
-                        </div>
-                        {/* Elegant background flair */}
-                        <div className="absolute top-0 right-0 p-12 opacity-[0.03] group-hover:scale-110 transition-transform duration-1000 pointer-events-none">
-                            <Building2 size={300} strokeWidth={1} />
-                        </div>
-                    </div>
-
-                    {/* RECENT APPLICATIONS (Modular List) */}
-                    <div className="space-y-8">
-                        <div className="flex items-center justify-between px-2">
-                            <div className="space-y-1">
-                                <h3 className="text-lg font-semibold text-slate-900 tracking-tight">Active Enrollments</h3>
-                                <p className="text-[11px] font-bold text-slate-400 uppercase tracking-widest">Your last 4 submissions</p>
+                            <div className="space-y-2">
+                                <h4 className="text-2xl font-bold">{activeInternship.internship?.title}</h4>
+                                <p className="text-blue-100 font-medium flex items-center gap-2">
+                                    <Building2 size={16} />
+                                    {activeInternship.internship?.company_name}
+                                </p>
                             </div>
-                            <button onClick={() => navigate('/applications')} className="group flex items-center gap-2 text-xs font-bold text-[#0B2C5D] hover:opacity-70 transition-all">
-                                Full Registry <ChevronRight size={14} className="group-hover:translate-x-1 transition-transform" />
+                            <button
+                                onClick={() => navigate('/my-internship')}
+                                className="mt-6 bg-white text-christBlue px-6 py-2.5 rounded-lg font-bold hover:bg-blue-50 transition-colors flex items-center gap-2"
+                            >
+                                View Details <ArrowUpRight size={16} />
                             </button>
                         </div>
+                    )}
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 gap-4">
+                    {/* Recent Applications List */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+                        <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                            <h3 className="text-lg font-bold text-slate-800">Recent Applications</h3>
+                            <button
+                                onClick={() => navigate('/applications')}
+                                className="text-sm font-bold text-christBlue hover:underline flex items-center gap-1"
+                            >
+                                View All <ChevronRight size={16} />
+                            </button>
+                        </div>
+                        <div className="divide-y divide-slate-100">
                             {isLoading ? (
-                                <div className="h-64 flex flex-col items-center justify-center gap-4 bg-white rounded-3xl border border-slate-100 italic text-slate-400">
-                                    <div className="w-8 h-8 border-2 border-slate-200 border-t-[#0B2C5D] rounded-full animate-spin"></div>
-                                    <span className="text-xs font-bold uppercase tracking-widest">Synchronizing...</span>
+                                <div className="p-12 text-center">
+                                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-christBlue mx-auto"></div>
                                 </div>
                             ) : applications.length === 0 ? (
-                                <div className="bg-white rounded-[2rem] border border-dashed border-slate-200 py-20 text-center space-y-4">
-                                    <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto text-slate-300">
-                                        <FileText size={32} />
-                                    </div>
-                                    <p className="text-slate-400 text-sm font-medium italic">No active enrollments detected.</p>
+                                <div className="p-12 text-center">
+                                    <FileText size={48} className="mx-auto text-slate-300 mb-4" />
+                                    <h4 className="text-lg font-bold text-slate-800 mb-2">No Applications Yet</h4>
+                                    <p className="text-slate-500 mb-6">Start applying to internships to see them here</p>
+                                    <button
+                                        onClick={() => navigate('/browse-offers')}
+                                        className="bg-christBlue text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-colors"
+                                    >
+                                        Browse Internships
+                                    </button>
                                 </div>
                             ) : (
-                                applications.slice(0, 4).map((app) => (
-                                    <div
-                                        key={app.id}
-                                        onClick={() => navigate(`/applications/${app.id}`)}
-                                        className="bg-white rounded-[1.75rem] border border-slate-200/40 p-6 flex items-center justify-between gap-6 transition-all hover:border-[#0B2C5D]/10 hover:shadow-xl hover:shadow-slate-200/20 cursor-pointer group hover:-translate-y-1"
-                                    >
-                                        <div className="flex items-center gap-6 flex-1 min-w-0">
-                                            <div className="w-14 h-14 rounded-2xl bg-slate-50 flex items-center justify-center text-slate-400 group-hover:bg-[#0B2C5D] group-hover:text-white transition-all duration-500 transform group-hover:rotate-[10deg]">
-                                                <Building2 size={24} strokeWidth={1.5} />
+                                applications.slice(0, 5).map((app) => (
+                                    <div key={app.id} className="p-4 hover:bg-slate-50 transition-colors cursor-pointer" onClick={() => navigate('/applications')}>
+                                        <div className="flex items-start justify-between gap-4">
+                                            <div className="flex-1 min-w-0">
+                                                <h4 className="font-bold text-slate-800 truncate">{app.internship?.title || 'Internship'}</h4>
+                                                <p className="text-sm text-slate-500 truncate">{app.internship?.company_name || 'Company'}</p>
                                             </div>
-                                            <div className="truncate space-y-1">
-                                                <h4 className="text-base font-bold text-slate-800 truncate group-hover:text-[#0B2C5D] transition-colors">{app.internship?.title || 'System Intern'}</h4>
-                                                <div className="flex items-center gap-2">
-                                                    <span className="text-[10px] text-slate-400 font-extrabold uppercase tracking-widest">{app.internship?.corporate?.company_name || 'Verification Pending'}</span>
-                                                    <span className="w-1 h-1 bg-slate-200 rounded-full"></span>
-                                                    <span className="text-[10px] text-slate-300 font-bold italic">{new Date(app.created_at).getFullYear()} Cycle</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center gap-8 shrink-0">
-                                            <div className="hidden sm:block text-right">
-                                                <p className="text-[10px] font-extrabold text-slate-300 uppercase tracking-widest mb-1">Status</p>
-                                                <Badge variant={
-                                                    app.status === 'ACTIVE' ? 'success' :
-                                                        app.status === 'SHORTLISTED' ? 'info' :
-                                                            app.status === 'REJECTED' ? 'error' : 'warning'
-                                                } className="lowercase font-bold rounded-full px-4 py-1 border-0 shadow-sm">
-                                                    {app.status.replace('_', ' ')}
-                                                </Badge>
-                                            </div>
-                                            <div className="w-10 h-10 rounded-full border border-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-[#0B2C5D]/5 group-hover:text-[#0B2C5D] transition-all">
-                                                <ChevronRight size={18} />
-                                            </div>
+                                            <Badge variant={getStatusBadgeVariant(app.status)}>
+                                                {app.status}
+                                            </Badge>
                                         </div>
                                     </div>
                                 ))
@@ -200,140 +201,72 @@ const StudentDashboard = () => {
                     </div>
                 </div>
 
-                {/* SIDEBAR WIDGETS (RIGHT COLUMN) */}
-                <div className="lg:col-span-4 space-y-12">
-                    {/* QUICK ACTION TILES */}
-                    <div className="space-y-4">
-                        <h3 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400 px-2 underline decoration-[#0B2C5D]/20 underline-offset-4">Core Utilities</h3>
-                        <div className="grid grid-cols-2 gap-4">
+                {/* Sidebar: Quick Actions */}
+                <div className="space-y-6">
+                    {/* Quick Actions */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                        <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider mb-4">Quick Actions</h3>
+                        <div className="space-y-3">
                             {[
-                                { icon: FileText, label: 'Applications', path: '/applications' },
-                                { icon: ClipboardCheck, label: 'Weekly Logs', path: '/weekly-reports' },
-                                { icon: ListChecks, label: 'Offer Status', path: '/applications' },
-                                { icon: FileUp, label: 'Materials', path: '/materials' },
+                                { icon: Briefcase, label: 'Browse Offers', path: '/browse-offers', color: 'text-blue-600', bg: 'bg-blue-50' },
+                                { icon: FileText, label: 'My Applications', path: '/applications', color: 'text-purple-600', bg: 'bg-purple-50' },
+                                { icon: ClipboardCheck, label: 'Weekly Reports', path: '/my-internship', color: 'text-emerald-600', bg: 'bg-emerald-50' },
                             ].map((action, i) => (
                                 <button
                                     key={i}
                                     onClick={() => navigate(action.path)}
-                                    className="bg-white border border-slate-200/50 p-7 rounded-3xl flex flex-col items-center justify-center gap-4 transition-all hover:bg-slate-50 hover:border-[#0B2C5D]/20 hover:scale-[1.02] shadow-sm active:scale-95 group"
+                                    className="w-full flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:border-christBlue hover:bg-blue-50 transition-all group"
                                 >
-                                    <div className="w-12 h-12 rounded-2xl bg-slate-50 group-hover:bg-[#0B2C5D]/5 flex items-center justify-center text-slate-400 group-hover:text-[#0B2C5D] transition-all">
-                                        <action.icon size={22} strokeWidth={1.5} />
+                                    <div className={`p-2 rounded-lg ${action.bg}`}>
+                                        <action.icon size={18} className={action.color} />
                                     </div>
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{action.label}</span>
+                                    <span className="text-sm font-bold text-slate-700 group-hover:text-christBlue">{action.label}</span>
+                                    <ChevronRight size={16} className="ml-auto text-slate-400 group-hover:text-christBlue" />
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* FACULTY GUIDE WIDGET */}
-                    <div className="relative overflow-hidden bg-[#0B2C5D] rounded-[2.5rem] p-8 md:p-10 text-white shadow-2xl shadow-[#0B2C5D]/20 transition-all hover:-translate-y-1 group">
-                        <div className="relative z-10 space-y-8">
-                            <div className="flex items-center justify-between">
-                                <div className="space-y-1">
-                                    <h3 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-blue-300/60">Faculty Mentor</h3>
-                                    <p className="text-xs font-semibold text-blue-200">Consultation Hub</p>
-                                </div>
-                                <div className="w-10 h-10 rounded-2xl bg-white/10 flex items-center justify-center backdrop-blur-md">
-                                    <Star size={18} className="text-yellow-400 fill-yellow-400" />
-                                </div>
-                            </div>
-
-                            {activeInternship ? (
-                                <div className="space-y-8">
-                                    <div className="flex items-center gap-5 p-4 rounded-2xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                                        <div className="relative">
-                                            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-blue-400 to-[#0B2C5D] flex items-center justify-center text-xl font-bold border-2 border-white/20">
-                                                AK
-                                            </div>
-                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full border-2 border-[#0B2C5D]"></div>
-                                        </div>
-                                        <div className="min-w-0">
-                                            <p className="font-bold text-lg leading-tight truncate">Prof. Amit Kumar</p>
-                                            <p className="text-[10px] text-blue-300 font-bold uppercase tracking-wider truncate">Comp. Science / Guide</p>
-                                        </div>
-                                    </div>
-                                    <button className="w-full bg-white text-[#0B2C5D] py-4 rounded-2xl text-xs font-extrabold uppercase tracking-widest transition-all hover:bg-blue-50 active:scale-[0.98] shadow-lg shadow-black/10">
-                                        Open Consultation Window
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="py-4 space-y-4">
-                                    <div className="w-14 h-14 rounded-[1.5rem] bg-white/5 border border-white/10 flex items-center justify-center text-blue-300 shadow-inner">
-                                        <AlertCircle size={24} />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <p className="text-sm font-bold text-blue-50 leading-snug">Verification in progress.</p>
-                                        <p className="text-[11px] text-blue-300 font-medium italic opacity-80 leading-relaxed">Guide assignments are automated upon position confirmation.</p>
-                                    </div>
-                                </div>
-                            )}
+                    {/* Performance Insights */}
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-100 p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wider">Performance</h3>
+                            <TrendingUp size={16} className="text-emerald-500" />
                         </div>
-                        {/* Dramatic decorative flair */}
-                        <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-                    </div>
-
-                    {/* ACTIVITY INSIGHTS */}
-                    <div className="bg-white rounded-[2.5rem] border border-slate-200/50 p-8 md:p-10 space-y-10 shadow-sm">
-                        <div className="space-y-8">
-                            <div className="flex items-center justify-between">
-                                <h3 className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-slate-400">Application Performance</h3>
-                                <div className="p-2 bg-emerald-50 rounded-xl">
-                                    <TrendingUp size={16} className="text-emerald-500" />
+                        <div className="space-y-4">
+                            <div>
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-xs font-medium text-slate-500">Application Rate</span>
+                                    <span className="text-xl font-bold text-christBlue">{applications.length}</span>
+                                </div>
+                                <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                                    <div className="h-full bg-christBlue rounded-full" style={{ width: `${Math.min(100, applications.length * 10)}%` }}></div>
                                 </div>
                             </div>
-
-                            <div className="space-y-6">
-                                <div className="space-y-3">
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-xs font-bold text-slate-500 uppercase tracking-tight">Total Active Submissions</span>
-                                        <span className="text-3xl font-light text-[#0B2C5D] tracking-tighter">{applications.length}</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                                        <div className="h-full bg-[#0B2C5D] rounded-full" style={{ width: `${Math.min(100, applications.length * 10)}%` }}></div>
-                                    </div>
-                                </div>
-
-                                <div className="grid grid-cols-2 gap-8 pt-4">
-                                    <div className="space-y-2 border-l-2 border-[#0B2C5D]/10 pl-4">
-                                        <p className="text-2xl font-light text-slate-800 tracking-tight">{hasShortlist.length}</p>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Shortlists</p>
-                                    </div>
-                                    <div className="space-y-2 border-l-2 border-emerald-100 pl-4">
-                                        <div className="flex items-center gap-1.5">
-                                            <p className="text-2xl font-light text-slate-800 tracking-tight">{activeInternship ? 1 : 0}</p>
-                                            {activeInternship && <CheckCircle size={14} className="text-emerald-500" />}
-                                        </div>
-                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Offers</p>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="pt-10 border-t border-slate-100 relative overflow-hidden">
-                            <div className="flex items-center gap-4 mb-4">
-                                <div className="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center text-orange-500 shadow-sm shadow-orange-100">
-                                    <Clock size={20} />
+                            <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100">
+                                <div>
+                                    <p className="text-2xl font-bold text-slate-800">{shortlistedApps.length}</p>
+                                    <p className="text-xs font-medium text-slate-500">Shortlisted</p>
                                 </div>
                                 <div>
-                                    <h4 className="text-[11px] font-extrabold text-[#0B2C5D] uppercase tracking-[0.2em] mb-0.5">Global Deadline</h4>
-                                    <p className="text-[10px] font-bold text-orange-500 uppercase tracking-widest">Weekly Log 05</p>
+                                    <p className="text-2xl font-bold text-slate-800">{activeInternship ? 1 : 0}</p>
+                                    <p className="text-xs font-medium text-slate-500">Active</p>
                                 </div>
                             </div>
-                            <p className="text-xs text-slate-500 font-medium leading-[1.6]">
-                                Ensure all logs are verified by <span className="text-slate-900 font-extrabold">Friday, 17:00 IST</span>. Pending validations may affect credit points.
-                            </p>
                         </div>
                     </div>
                 </div>
             </div>
-
-            {/* Subfooter Flair */}
-            <div className="max-w-7xl mx-auto mt-20 text-center">
-                <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">IMS Global Dashboard &copy; 2024</p>
-            </div>
         </div>
     );
+};
+
+const resultIcon = (status: string) => {
+    switch (status) {
+        case 'ACTIVE': return CheckCircle;
+        case 'PENDING': return Clock;
+        default: return AlertCircle;
+    }
 };
 
 export default StudentDashboard;

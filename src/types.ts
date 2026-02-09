@@ -14,6 +14,7 @@ export interface User {
 export interface AuthResponse {
     access_token: string;
     token_type: string;
+    role?: string; // Backend returns user role in login response
 }
 
 export interface Department {
@@ -87,6 +88,9 @@ export interface StudentApplication {
     internship_id: string;
     student_id: string;
     offer_letter_url?: string | null; // Backend field for uploaded offer letter
+    completion_letter_url?: string | null; // Completion certificate uploaded by student
+    credits?: number; // Track if credits have been authorized
+    credit_points?: number; // Alternative field name for credits from backend
     internship?: { // Nested internship details from backend
         id: string;
         title: string;
@@ -176,6 +180,7 @@ export interface GuideAssignment {
     department: string;
     internshipTitle: string;
     companyName: string;
+    duration?: number | null;
     status: string;
     guide?: string;
     guideId?: string;
@@ -208,6 +213,7 @@ export interface InternshipCompletion {
     attendancePercentage: number;
     guideRating: number;
     finalReportUrl?: string;
+    completion_letter_url?: string; // Completion certificate URL
     status: 'IN_PROGRESS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
     certificateUrl?: string;
     completedAt?: string;
@@ -229,6 +235,7 @@ export interface StudentProfileExtended extends GuideAssignment {
     department: string;
     startDate: string;
     endDate: string;
+    duration?: number | null;
     logs: WeeklyLog[];
     finalFeedback?: GuideFeedback;
 }
@@ -293,4 +300,39 @@ export interface WeeklyReportResponse {
     student_id: string;
     submitted_at: string;
     internship?: InternshipInfo | null;
+}
+
+export interface PlacementHeadStats {
+    total_users: number;
+    total_internships: number;
+    corporate_count: number;
+    total_placed: number;
+    pending_reviews: number;
+    internships_by_status: Record<string, number>;
+    internships_by_dept: Record<string, number>;
+}
+
+export interface RecruiterAiAnalysis {
+    ai_trust_score: number;
+    ai_trust_tier: string;
+}
+
+export interface Recruiter {
+    id: string; // Internal ID
+    user_id: string; // Auth User ID
+    name: string; // HR Name
+    email: string;
+    companyName: string;
+    company_name?: string; // Backend alternative
+    isActive: boolean;
+    is_active?: boolean; // Backend alternative
+    status?: string; // PENDING, APPROVED, BANNED
+    ai_trust_score?: number;
+    created_at?: string;
+    industry?: string;
+    website_url?: string;
+    linkedin_url?: string;
+    cin?: string;
+    gst?: string;
+    address?: string; // Registered address
 }

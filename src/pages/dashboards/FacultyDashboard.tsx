@@ -9,7 +9,7 @@ import type { GuideAssignment } from "../../types";
 import { Bell, ChevronRight, Users, FileText, CheckCircle, Clock } from "lucide-react";
 import { useNotifications } from "../../context/NotificationContext";
 
-export default function GuideDashboard() {
+export default function FacultyDashboard() {
     const navigate = useNavigate();
     const [students, setStudents] = useState<GuideAssignment[]>([]);
     const [isLoading, setIsLoading] = useState(true);
@@ -34,13 +34,37 @@ export default function GuideDashboard() {
             }
 
             // Map the response to the expected format
-            const mappedStudents = internshipsArray.map((item: any) => ({
-                id: item.student_id || item.id,
-                studentName: item.student_name || 'Unknown',
-                studentRegNo: item.student_email || '',
-                companyName: item.company || 'N/A',
-                status: item.is_completed ? 'COMPLETED' : 'ACTIVE'
-            }));
+            const mappedStudents = internshipsArray.map((item: any) => {
+                console.log('=== DASHBOARD ITEM ===', item);
+                console.log('internship.corporate:', item.internship?.corporate);
+                console.log('external_internship:', item.external_internship);
+
+                // Extract company name from nested structure
+                const companyName = item.internship?.corporate?.company_name ||
+                    item.internship?.company_name ||
+                    item.external_internship?.company_name ||
+                    item.company_name ||
+                    item.company ||
+                    item.comp ||  // Handle abbreviated field
+                    'N/A';
+
+                console.log('Extracted company name:', companyName);
+
+                // Extract duration from internship data
+                const duration = item.internship?.duration ||
+                    item.external_internship?.duration ||
+                    item.duration ||
+                    null;
+
+                return {
+                    id: item.student_id || item.id,
+                    studentName: item.student_name || 'Unknown',
+                    studentRegNo: item.student_email || '',
+                    companyName: companyName,
+                    duration: duration,
+                    status: item.is_completed ? 'COMPLETED' : 'ACTIVE'
+                };
+            });
 
             setStudents(mappedStudents as any);
         } catch (error: any) {
@@ -202,11 +226,7 @@ export default function GuideDashboard() {
                         <Button variant="ghost" size="sm" className="w-full mt-4 text-slate-500 font-normal">View All Notifications</Button>
                     </div>
 
-                    <div className="bg-[#0F2540] p-6 rounded-xl shadow-lg text-white">
-                        <h3 className="font-bold text-lg mb-2">Guide Resources</h3>
-                        <p className="text-blue-200 text-sm mb-4">Download evaluation rubrics and guidelines for internship grading.</p>
-                        <Button className="w-full bg-white text-[#0F2540] hover:bg-blue-50 border-0">Download Guidelines</Button>
-                    </div>
+
                 </div>
             </div>
         </div>

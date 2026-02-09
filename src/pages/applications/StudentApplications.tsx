@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
+
 import {
     Calendar, CheckCircle2, Clock,
     ChevronRight, Building2, FileText,
@@ -7,6 +9,7 @@ import {
 import Badge from '../../components/ui/Badge';
 import { InternshipService } from '../../services/internship.service';
 import type { StudentApplication, Internship } from '../../types';
+
 
 const StatusTimeline = ({ currentStatus, createdAt }: { currentStatus: string, createdAt: string }) => {
     const allStages = [
@@ -17,7 +20,7 @@ const StatusTimeline = ({ currentStatus, createdAt }: { currentStatus: string, c
         { status: 'ACTIVE', label: 'Internship Active', desc: 'Offer approved. Your internship is confirmed!' }
     ];
 
-    const currentIdx = allStages.findIndex(s => s.status === currentStatus);
+    const currentIdx = allStages.findIndex(s => s.status === currentStatus || (s.status === 'ACCEPTED' && currentStatus === 'OFFER_RECEIVED'));
     const isRejected = currentStatus === 'REJECTED';
     const isArchived = currentStatus === 'ARCHIVED';
 
@@ -68,25 +71,49 @@ const StatusTimeline = ({ currentStatus, createdAt }: { currentStatus: string, c
 };
 
 const StudentApplications = () => {
-    const [activeTab, setActiveTab] = useState<'All' | 'Active' | 'Offers'>('All');
+    const [activeTab, setActiveTab] = useState<'All' | 'Active'>('All');
     const [applications, setApplications] = useState<StudentApplication[]>([]);
     const [internships, setInternships] = useState<Record<string, Internship>>({});
     const [isLoading, setIsLoading] = useState(true);
     const [selectedAppId, setSelectedAppId] = useState<string | null>(null);
+    const [error, setError] = useState<string | null>(null);
+    const location = useLocation();
+
+    useEffect(() => {
+        if (location.state?.selectedAppId) {
+            setSelectedAppId(location.state.selectedAppId);
+        }
+    }, [location.state]);
 
     useEffect(() => {
         const fetchData = async () => {
             setIsLoading(true);
+            setError(null);
             try {
-                const [apps, allInternships] = await Promise.all([
-                    InternshipService.getStudentApplications(),
-                    InternshipService.getApprovedInternships()
-                ]);
-                const internMap = allInternships.reduce((acc: Record<string, Internship>, curr: Internship) => ({ ...acc, [curr.id]: curr }), {});
-                setInternships(internMap);
+                // Fetch applications first as primary data
+                let apps: StudentApplication[] = [];
+                try {
+                    apps = await InternshipService.getStudentApplications();
+                } catch (e) {
+                    console.error("Failed to fetch applications", e);
+                    throw new Error("Could not load your applications. Please try again later.");
+                }
+
                 setApplications(apps);
-            } catch (error) {
-                console.error('Failed to fetch applications:', error);
+
+                // Try to fetch internship details to enrich the view, but don't block if it fails
+                try {
+                    const allInternships = await InternshipService.getApprovedInternships();
+                    const internMap = allInternships.reduce((acc: Record<string, Internship>, curr: Internship) => ({ ...acc, [curr.id]: curr }), {});
+                    setInternships(internMap);
+                } catch (e) {
+                    console.warn("Failed to fetch internship details for enrichment", e);
+                    // We can still show applications using embedded data if available
+                }
+
+            } catch (error: any) {
+                console.error('Failed to fetch data:', error);
+                setError(error.message || "An error occurred while loading data.");
             } finally {
                 setIsLoading(false);
             }
@@ -96,14 +123,11 @@ const StudentApplications = () => {
 
 
     const filteredApps = applications.filter(app => {
+        if (selectedAppId && app.id === selectedAppId) return true;
         if (activeTab === 'All') return app.status !== 'ARCHIVED' && app.status !== 'REJECTED';
         if (activeTab === 'Active') {
             // Show all in-progress applications
             return ['SUBMITTED', 'UNDER_REVIEW', 'SHORTLISTED', 'ACCEPTED', 'ACTIVE'].includes(app.status);
-        }
-        if (activeTab === 'Offers') {
-            // Show only applications that have received offers and need offer letter upload
-            return app.status === 'ACCEPTED' && !app.offer_letter_url;
         }
         return true;
     });
@@ -111,6 +135,7 @@ const StudentApplications = () => {
     const getStatusVariant = (status: string): any => {
         switch (status) {
             case 'ACTIVE': return 'success';
+            case 'ACCEPTED': return 'info';
             case 'OFFER_RECEIVED': return 'info';
             case 'SHORTLISTED': return 'navy';
             case 'UNDER_REVIEW': return 'warning';
@@ -121,87 +146,87 @@ const StudentApplications = () => {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
+        <div className="space-y-8 animate-fade-in-up md:p-6 font-sans">
             {/* Header */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+            <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-slate-200 pb-6">
                 <div>
-                    <h1 className="text-4xl font-black text-[#0F172A] tracking-tighter">Application Hub</h1>
-                    <p className="text-slate-400 font-bold mt-1 uppercase text-xs tracking-[0.2em] opacity-60">Track your progress and manage offers</p>
+                    <h1 className="text-3xl font-bold text-christBlue">My Applications</h1>
+                    <p className="text-slate-500 mt-1 font-medium">Track the status of your internship applications.</p>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex gap-2">
+                    {['All', 'Active'].map((tab) => (
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab as any)}
+                            className={`px-4 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === tab
+                                ? 'bg-christBlue text-white shadow-md'
+                                : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
+                                }`}
+                        >
+                            {tab} Applications
+                        </button>
+                    ))}
                 </div>
             </div>
 
-            {/* Notification Bar */}
-            <div className="bg-[#0F172A] p-6 rounded-[2rem] shadow-2xl text-white relative overflow-hidden group">
-                <div className="relative z-10 flex flex-col md:flex-row justify-between items-center gap-4">
-                    <div className="flex items-center gap-5">
-                        <div className="w-14 h-14 bg-blue-600/20 text-blue-400 rounded-2xl flex items-center justify-center border border-blue-500/30 group-hover:scale-110 transition-transform">
-                            <Bell size={24} className="animate-bounce" />
-                        </div>
-                        <div>
-                            <p className="text-lg font-black italic tracking-tight">Need help with onboarding?</p>
-                            <p className="text-blue-100/60 text-xs font-bold uppercase tracking-widest">Contact your assigned guide or the IC office.</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="absolute -right-20 -bottom-20 w-80 h-80 bg-blue-600/10 rounded-full blur-[80px]"></div>
-            </div>
-
-            {/* Tabs */}
-            <div className="flex gap-2 bg-slate-100/50 p-1.5 rounded-2xl max-w-fit border border-slate-100">
-                {['All', 'Active', 'Offers'].map((tab) => (
+            {/* Error Message */}
+            {error && (
+                <div className="bg-red-50 text-red-600 p-4 rounded-xl border border-red-100 flex items-center gap-3">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <p className="text-sm font-medium">{error}</p>
                     <button
-                        key={tab}
-                        onClick={() => setActiveTab(tab as any)}
-                        className={`px-6 py-2.5 rounded-xl text-xs font-black uppercase tracking-widest transition-all ${activeTab === tab
-                            ? 'bg-white text-blue-600 shadow-md border border-slate-100'
-                            : 'text-slate-400 hover:text-slate-600'
-                            }`}
+                        onClick={() => window.location.reload()}
+                        className="ml-auto text-xs underline font-bold hover:text-red-800"
                     >
-                        {tab}
+                        Retry
                     </button>
-                ))}
-            </div>
+                </div>
+            )}
 
             {/* Application List */}
-            <div className="grid grid-cols-1 lg:grid-cols-1 gap-6">
+            <div className="grid grid-cols-1 gap-6">
                 {isLoading ? (
-                    Array(3).fill(0).map((_, i) => (
-                        <div key={i} className="h-64 bg-slate-100 rounded-[32px] animate-pulse" />
-                    ))
+                    <div className="flex justify-center p-12">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-christBlue"></div>
+                    </div>
                 ) : filteredApps.length > 0 ? (
                     filteredApps.map((app) => {
                         const intern = internships[app.internship_id];
                         const isExpanded = selectedAppId === app.id;
+                        const offerLetterUrl = app.offer_letter_url;
 
                         return (
-                            <div key={app.id} className={`bg-white rounded-[32px] border border-slate-100 shadow-sm transition-all relative overflow-hidden group
-                                ${isExpanded ? 'ring-2 ring-blue-500 ring-offset-4 shadow-xl' : 'hover:border-blue-200'}`}>
-                                <div className="p-8">
-                                    <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                                        <div className="flex-1 flex gap-6">
-                                            <div className="w-20 h-20 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center shrink-0 group-hover:bg-blue-50 transition-colors">
-                                                <Building2 size={32} className="text-slate-300 group-hover:text-blue-600 transition-colors" />
+                            <div key={app.id} className={`bg-white rounded-xl border border-slate-200 shadow-sm transition-all overflow-hidden
+                                ${isExpanded ? 'ring-2 ring-blue-500/20 shadow-md' : 'hover:shadow-md'}`}>
+                                <div className="p-6">
+                                    <div className="flex flex-col md:flex-row justify-between items-start gap-6">
+                                        <div className="flex-1 flex gap-4">
+                                            <div className="w-14 h-14 bg-blue-50 rounded-lg flex items-center justify-center shrink-0 text-christBlue font-bold text-xl uppercase">
+                                                {(app.internship?.corporate?.company_name || intern?.company_name || 'C').charAt(0)}
                                             </div>
                                             <div>
-                                                <div className="flex items-center gap-3 mb-2">
-                                                    <h3 className="text-2xl font-black text-[#0F172A] tracking-tighter italic uppercase">{intern?.title || 'Unknown Role'}</h3>
+                                                <div className="flex items-center gap-3 mb-1">
+                                                    <h3 className="text-lg font-bold text-slate-900">
+                                                        {app.internship?.title || intern?.title || 'Unknown Role'}
+                                                    </h3>
                                                     <Badge variant={getStatusVariant(app.status)}>
                                                         {app.status.replace('_', ' ')}
                                                     </Badge>
                                                 </div>
-                                                <div className="flex flex-wrap gap-4 text-slate-400 text-[10px] font-black uppercase tracking-widest">
-                                                    <span className="flex items-center gap-1.5"><Building2 size={12} /> {intern?.company_name}</span>
-                                                    <span className="flex items-center gap-1.5"><Calendar size={12} /> Applied {new Date(app.created_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
-                                                    {app.resume_link && <span className="flex items-center gap-1.5 text-blue-600/60 lowercase italic tracking-normal"><FileText size={12} /> resume_attachment_v1.pdf</span>}
+                                                <div className="flex flex-wrap gap-x-4 gap-y-2 text-sm text-slate-500 font-medium">
+                                                    <span className="flex items-center gap-1.5">
+                                                        <Building2 size={14} />
+                                                        {app.internship?.company_name || app.internship?.corporate?.company_name || intern?.company_name || 'Unknown Company'}
+                                                    </span>
+                                                    <span className="flex items-center gap-1.5"><Calendar size={14} /> Applied {new Date(app.created_at).toLocaleDateString()}</span>
+                                                    {app.resume_link && <span className="flex items-center gap-1.5 text-blue-600"><FileText size={14} /> Resume Sent</span>}
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center gap-3 shrink-0">
-                                            {/* Show upload button for applications without offer letter */}
-                                            {!app.offer_letter_url && (
+                                        <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                                            {/* Offer Letter Upload Trigger */}
+                                            {['ACCEPTED', 'OFFER_RECEIVED', 'ACTIVE'].includes(app.status) && !offerLetterUrl && (
                                                 <div className="relative">
                                                     <input
                                                         type="file"
@@ -214,7 +239,7 @@ const StudentApplications = () => {
                                                                 try {
                                                                     await InternshipService.uploadOfferLetter(app.id, file);
                                                                     alert("Offer letter uploaded successfully!");
-                                                                    window.location.reload(); // Simple reload to refresh state
+                                                                    window.location.reload();
                                                                 } catch (err) {
                                                                     console.error("Upload failed", err);
                                                                     alert("Failed to upload offer letter.");
@@ -224,49 +249,37 @@ const StudentApplications = () => {
                                                     />
                                                     <label
                                                         htmlFor={`upload-offer-${app.id}`}
-                                                        className="bg-emerald-500 text-white font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl shadow-lg shadow-emerald-500/20 hover:bg-emerald-600 transition-all flex items-center gap-2 cursor-pointer"
+                                                        className="bg-emerald-600 text-white font-bold text-xs uppercase px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors flex items-center gap-2 cursor-pointer"
                                                     >
-                                                        <Upload size={16} /> Upload Offer
+                                                        <Upload size={14} /> Upload Offer
                                                     </label>
                                                 </div>
                                             )}
-                                            {/* Show link to view uploaded offer letter */}
-                                            {app.offer_letter_url && (
+
+                                            {offerLetterUrl && (
                                                 <a
-                                                    href={app.offer_letter_url}
+                                                    href={offerLetterUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    className="bg-blue-50 text-blue-600 font-black text-xs uppercase tracking-widest px-6 py-3.5 rounded-xl hover:bg-blue-100 transition-all flex items-center gap-2"
+                                                    className="bg-blue-50 text-blue-600 font-bold text-xs uppercase px-4 py-2 rounded-lg hover:bg-blue-100 transition-colors flex items-center gap-2"
                                                 >
-                                                    <FileText size={16} /> View Offer Letter
+                                                    <FileText size={14} /> View Offer
                                                 </a>
                                             )}
+
                                             <button
                                                 onClick={() => setSelectedAppId(isExpanded ? null : app.id)}
-                                                className={`p-3.5 rounded-xl transition-all ${isExpanded ? 'bg-blue-50 text-blue-600' : 'bg-slate-50 text-slate-400 hover:text-slate-600 hover:bg-slate-100'}`}>
-                                                {isExpanded ? <ChevronRight size={20} className="rotate-90" /> : <ChevronRight size={20} />}
+                                                className={`p-2 rounded-lg transition-colors border ${isExpanded ? 'bg-blue-50 border-blue-200 text-blue-600' : 'bg-white border-slate-200 text-slate-400 hover:bg-slate-50'}`}>
+                                                <ChevronRight size={20} className={`transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                                             </button>
                                         </div>
                                     </div>
 
-                                    {/* Expanded Timeline View */}
+                                    {/* Timeline */}
                                     {isExpanded && (
-                                        <div className="mt-10 pt-10 border-t border-slate-50 grid md:grid-cols-2 gap-12 animate-in fade-in slide-in-from-top-4 duration-500">
-                                            <div>
-                                                <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-6 border-l-4 border-blue-600 pl-3">Live Progress Tracker</h4>
-                                                <StatusTimeline currentStatus={app.status} createdAt={app.created_at} />
-                                            </div>
-                                            <div className="bg-slate-50/50 p-8 rounded-[2rem] border border-slate-100 flex flex-col justify-between">
-                                                <div>
-                                                    <h4 className="text-xs font-black text-slate-900 uppercase tracking-widest mb-4">Application Insights</h4>
-                                                    <p className="text-sm text-slate-500 leading-relaxed font-medium">Your profile matches <span className="text-blue-600 font-black">92%</span> of the required skills for this role. We have notified the recruiter about your strong alignment.</p>
-                                                </div>
-                                                <div className="mt-8 space-y-3">
-                                                    <button className="w-full py-4 bg-white text-[#0F172A] font-black text-xs uppercase tracking-widest rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-all flex items-center justify-center gap-2">
-                                                        <FileText size={16} /> View Submission Details
-                                                    </button>
-                                                </div>
-                                            </div>
+                                        <div className="mt-8 pt-8 border-t border-slate-100 animate-in fade-in slide-in-from-top-2">
+                                            <h4 className="text-sm font-bold text-slate-900 mb-6">Application Timeline</h4>
+                                            <StatusTimeline currentStatus={app.status} createdAt={app.created_at} />
                                         </div>
                                     )}
                                 </div>
@@ -274,13 +287,12 @@ const StudentApplications = () => {
                         );
                     })
                 ) : (
-                    <div className="py-32 bg-white rounded-[40px] border-2 border-dashed border-slate-100 flex flex-col items-center justify-center text-center">
-                        <div className="w-20 h-20 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-6 text-slate-200">
-                            <Clock size={40} />
+                    <div className="py-20 bg-white rounded-xl border border-dashed border-slate-200 flex flex-col items-center justify-center text-center">
+                        <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-300">
+                            <Clock size={32} />
                         </div>
-                        <h3 className="text-2xl font-black text-slate-300 italic uppercase">Quiet in here...</h3>
-                        <p className="text-slate-400 max-w-xs mt-2 font-bold opacity-60">Complete your profile or explore new offers to see them here.</p>
-                        <button className="mt-8 text-blue-600 font-black uppercase text-xs hover:underline decoration-2 underline-offset-4 tracking-widest">Explore Opportunities</button>
+                        <h3 className="text-lg font-bold text-slate-800">No applications found</h3>
+                        <p className="text-slate-500 mt-1">Start applying to internships to see them here.</p>
                     </div>
                 )}
             </div>

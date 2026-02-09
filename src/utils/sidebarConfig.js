@@ -1,11 +1,11 @@
 export const sidebarConfig = {
-    IC: [
-        { label: "Guide Allocation", path: "/ic/dashboard" },
-        { label: "Logout", path: "/logout" }, // Optional, usually in profile
+    PROGRAMME_COORDINATOR: [
+        { label: "Guide Allocation", path: "/dashboard" },
+        { label: "Reference", path: "/ic/dashboard" } // Keeping legacy path just in case
     ],
 
     HOD: [
-        { label: "Dashboard", path: "/hod/dashboard" },
+        { label: "Dashboard", path: "/dashboard" },
         { label: "Student Applications", path: "/hod/applications" },
         { label: "LOR Approvals", path: "/hod/lor" },
         { label: "Reports", path: "/reports" },
@@ -17,9 +17,9 @@ export const sidebarConfig = {
     ],
 
     RECRUITER: [
-        { label: "Dashboard", path: "/recruiter/dashboard" },
-        { label: "Post Internship", path: "/recruiter/post" },
-        { label: "My Internships", path: "/recruiter/list" },
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Post Internship", path: "/jobs/new" },
+        { label: "My Internships", path: "/jobs" },
         { label: "Reports", path: "/reports" },
     ],
 
@@ -32,9 +32,18 @@ export const sidebarConfig = {
 
     PLACEMENT_OFFICE: [
         { label: "Dashboard", path: "/dashboard" },
-        { label: "Recruiters", path: "/recruiters" },
-        { label: "Company Approvals", path: "/company-approvals" },
-        { label: "Credits Approval", path: "/credits-approval" },
-        { label: "Credit Auth", path: "/credit-auth" },
+        { label: "Approved Internships", path: "/approved-internships" },
+    ],
+
+    PLACEMENT: [
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Approved Internships", path: "/approved-internships" },
+    ],
+
+    PLACEMENT_HEAD: [
+        { label: "Dashboard", path: "/dashboard" },
+        { label: "Recruiter Approvals", path: "/company-approvals" },
+        { label: "Approved Internships", path: "/approved-internships" },
+        { label: "All Recruiters", path: "/recruiters" },
     ],
 };

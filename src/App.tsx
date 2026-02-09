@@ -1,6 +1,6 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, Link, useNavigate } from 'react-router-dom';
-import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, CheckCircle, Shield } from 'lucide-react';
+import { LogOut, LayoutDashboard, Users, Briefcase, FileText, UserCheck, CheckCircle, Shield, Building2 } from 'lucide-react';
 
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { NotificationProvider } from './context/NotificationContext';
@@ -11,11 +11,10 @@ import ErrorBoundary from './components/ui/ErrorBoundary';
 
 // Pages
 import LandingPage from './pages/LandingPage';
-import LoginPage from './pages/LoginPage';
-import StudentLoginPage from './pages/StudentLoginPage';
-import RecruiterLoginPage from './pages/RecruiterLoginPage';
-import Login from './pages/Login';
-import StudentRegisterPage from './pages/StudentRegisterPage';
+import StudentLoginPage from './pages/auth/StudentLoginPage';
+import CorporateLoginPage from './pages/auth/CorporateLoginPage';
+import StaffLoginPage from './pages/auth/StaffLoginPage';
+import RegisterPage from './pages/auth/RegisterPage';
 import Dashboard from './pages/Dashboard';
 import Unauthorized from './pages/Unauthorized';
 import NotFound from './pages/NotFound';
@@ -31,7 +30,7 @@ import WeeklyReports from './pages/reports/WeeklyReports';
 import WeeklyLogModule from './pages/monitoring/WeeklyLogModule';
 import InternshipCompletionStatus from './pages/monitoring/InternshipCompletion';
 import ApprovedInternships from './pages/placement/ApprovedInternships';
-import CustomApprovals from './pages/placement/CustomApprovals';
+import PlacementOfficerDashboard from './pages/dashboards/PlacementOfficerDashboard';
 import CompanyApproval from './pages/company/CompanyApproval';
 import RecruiterManagement from './pages/recruiters/RecruiterManagement';
 import ClosureEvaluation from './pages/closure/ClosureEvaluation';
@@ -39,6 +38,7 @@ import CreditAuth from './pages/credit/CreditAuth';
 import UserManagement from './pages/admin/UserManagement';
 import RecruiterProfile from './pages/recruiters/RecruiterProfile';
 import PlacementProfile from './pages/profiles/PlacementProfile';
+import StudentProfile from './pages/profiles/StudentProfile';
 import StudentDetailsPage from './pages/guides/StudentDetailsPage';
 import GuideAssignment from './pages/guides/GuideAssignment';
 import AssignedStudents from './pages/guides/AssignedStudents';
@@ -46,11 +46,19 @@ import AssignedStudents from './pages/guides/AssignedStudents';
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, loading } = useAuth();
 
   // Define public pages that don't need the sidebar
-  const publicRoutes = ['/', '/login/staff', '/login/recruiter', '/register', '/login', '/login-page', '/login/student'];
+  const publicRoutes = ['/', '/login', '/login/student', '/login/corporate', '/login/staff', '/register'];
   const isAuthPage = publicRoutes.includes(location.pathname);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      </div>
+    );
+  }
 
   if (isAuthPage || !isAuthenticated) {
     return <div className="min-h-screen bg-gray-100">{children}</div>;
@@ -65,12 +73,22 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         return [
           { icon: Users, label: 'Guide Allocation', path: '/dashboard' },
         ];
-      case 'PLACEMENT':
       case 'PLACEMENT_HEAD':
+        return [
+          { icon: Shield, label: 'Dashboard', path: '/dashboard' },
+          { icon: Building2, label: 'Recruiter Approvals', path: '/company-approvals' },
+          { icon: CheckCircle, label: 'Approved Internships', path: '/approved-internships' },
+          { icon: Users, label: 'All Recruiters', path: '/recruiters' },
+        ];
+      case 'PLACEMENT':
+      case 'PLACEMENT_OFFICE':
+        return [
+          { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
+          { icon: CheckCircle, label: 'Approved Internships', path: '/approved-internships' },
+        ];
       case 'PLACEMENT_OFFICE':
         return [
           { icon: LayoutDashboard, label: 'Internship Approvals', path: '/dashboard' },
-          { icon: Shield, label: 'Recruiter Approvals', path: '/company-approvals' },
           { icon: CheckCircle, label: 'Approved Internships', path: '/approved-internships' },
           { icon: FileText, label: 'Custom Approvals', path: '/custom-approvals' },
         ];
@@ -149,10 +167,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
                   {user?.role === 'CORPORATE' || user?.role === 'RECRUITER' ? 'Recruiter Portal' :
                     user?.role === 'FACULTY' ? 'Faculty Portal' :
                       user?.role === 'HOD' ? 'HOD Portal' :
-                        (user?.role === 'PLACEMENT' || user?.role === 'PLACEMENT_HEAD') ? 'Placement Office' :
-                          user?.role === 'PROGRAMME_COORDINATOR' ? 'Programme Coordinator' :
-                            user?.role === 'STUDENT' ? 'Student Portal' :
-                              'Internships'}
+                        (user?.role === 'PLACEMENT_OFFICE' || user?.role === 'PLACEMENT') ? 'Placement Coordinator Portal' :
+                          user?.role === 'PLACEMENT_HEAD' ? 'Placement Head Portal' :
+                            user?.role === 'PROGRAMME_COORDINATOR' ? 'Programme Coordinator' :
+                              user?.role === 'STUDENT' ? 'Student Portal' :
+                                'Internships'}
                 </p>
               </div>
             )}
@@ -196,6 +215,75 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
+const AppRoutes = () => {
+  const { user } = useAuth();
+
+  return (
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/login" element={<StudentLoginPage />} />
+      <Route path="/login/student" element={<StudentLoginPage />} />
+      <Route path="/login/corporate" element={<CorporateLoginPage />} />
+      <Route path="/login/staff" element={<StaffLoginPage />} />
+      <Route path="/register" element={<RegisterPage />} />
+
+      {/* Legacy Routes redirecting to new structure */}
+      <Route path="/login-page" element={<Navigate to="/login" replace />} />
+      <Route path="/login/recruiter" element={<Navigate to="/login/corporate" replace />} />
+
+      {/* Protected Functional Routes */}
+      <Route element={<ProtectedRoute />}>
+        {/* Dashboard redirects based on role via Dashboard component */}
+        <Route path="/dashboard" element={<Dashboard />} />
+
+        <Route element={<RoleGuard allowedRoles={['PLACEMENT', 'PLACEMENT_HEAD', 'PLACEMENT_OFFICE']} />}>
+          <Route path="/approved-internships" element={<ApprovedInternships />} />
+          <Route path="/custom-approvals" element={<PlacementOfficerDashboard />} />
+          <Route path="/recruiters" element={<RecruiterManagement />} />
+          <Route path="/company-approvals" element={<CompanyApproval />} />
+          <Route path="/credits-approval" element={<ClosureEvaluation />} />
+          <Route path="/credit-auth" element={<CreditAuth />} />
+          <Route path="/admin/users" element={<UserManagement />} />
+          <Route path="/users" element={<UserManagement />} />
+        </Route>
+
+        <Route path="/recruiters/profile" element={<RecruiterProfile />} />
+
+        <Route path="/jobs" element={<JobPostingList />} />
+        <Route path="/jobs/new" element={<JobForm />} />
+        <Route path="/jobs/:id/edit" element={<JobForm />} />
+
+        <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
+          <Route path="/applications" element={<StudentApplications />} />
+          <Route path="/my-internship" element={<MyInternshipPortal />} />
+          <Route path="/offers" element={<BrowseOffers />} />
+          <Route path="/internships" element={<BrowseOffers />} />
+          <Route path="/weekly-reports" element={<WeeklyReports />} />
+          <Route path="/monitoring/logs" element={<WeeklyLogModule />} />
+          <Route path="/completion" element={<InternshipCompletionStatus />} />
+        </Route>
+
+        <Route element={<RoleGuard allowedRoles={['PLACEMENT_OFFICE', 'FACULTY', 'HOD', 'IC', 'RECRUITER', 'CORPORATE']} />}>
+          <Route path="/manage/applications" element={<ApplicationList />} />
+          <Route path="/manage/applications/:id" element={<ApplicationDetail />} />
+        </Route>
+
+        <Route path="/guides" element={<GuideAssignment />} />
+        <Route path="/assigned-students" element={<AssignedStudents />} />
+        <Route path="/guide/student/:id" element={<StudentDetailsPage />} />
+        <Route path="/profile" element={user?.role === 'STUDENT' ? <StudentProfile /> : <PlacementProfile />} />
+        <Route path="/closure" element={<ClosureEvaluation />} />
+      </Route>
+
+      <Route path="/unauthorized" element={<Unauthorized />} />
+
+      {/* Catch all */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+};
+
 const App = () => {
   return (
     <AuthProvider>
@@ -203,77 +291,7 @@ const App = () => {
         <Router>
           <Layout>
             <ErrorBoundary>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/login/staff" element={<LoginPage />} />
-                <Route path="/login/student" element={<StudentLoginPage />} />
-                <Route path="/login/recruiter" element={<RecruiterLoginPage />} />
-                <Route path="/register" element={<Login />} />
-                <Route path="/register-student" element={<StudentRegisterPage />} />
-
-                {/* Legacy Routes redirecting to new structure */}
-                <Route path="/login" element={<Navigate to="/register" replace />} />
-                <Route path="/login-page" element={<Navigate to="/login/staff" replace />} />
-
-                {/* Protected Functional Routes */}
-                <Route element={<ProtectedRoute />}>
-                  {/* Dashboard redirects based on role via Dashboard component */}
-                  <Route path="/dashboard" element={<Dashboard />} />
-
-
-
-                  <Route element={<RoleGuard allowedRoles={['PLACEMENT', 'PLACEMENT_HEAD', 'PLACEMENT_OFFICE']} />}>
-                    <Route path="/approved-internships" element={<ApprovedInternships />} />
-                    <Route path="/custom-approvals" element={<CustomApprovals />} />
-                    <Route path="/recruiters" element={<RecruiterManagement />} />
-                    <Route path="/company-approvals" element={<CompanyApproval />} />
-                    <Route path="/credits-approval" element={<ClosureEvaluation />} />
-                    <Route path="/credits-approval" element={<ClosureEvaluation />} />
-                    <Route path="/credit-auth" element={<CreditAuth />} />
-                    <Route path="/admin/users" element={<UserManagement />} />
-                    <Route path="/users" element={<UserManagement />} />
-                  </Route>
-
-                  <Route path="/recruiters/profile" element={<RecruiterProfile />} />
-
-                  <Route path="/jobs" element={<JobPostingList />} />
-                  <Route path="/jobs/new" element={<JobForm />} />
-                  <Route path="/jobs/:id/edit" element={<JobForm />} />
-
-                  <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
-                    <Route path="/applications" element={<StudentApplications />} />
-                    <Route path="/my-internship" element={<MyInternshipPortal />} />
-                    <Route path="/offers" element={<BrowseOffers />} />
-                    <Route path="/internships" element={<BrowseOffers />} />
-                    <Route path="/weekly-reports" element={<WeeklyReports />} />
-                    <Route path="/monitoring/logs" element={<WeeklyLogModule />} />
-                    <Route path="/completion" element={<InternshipCompletionStatus />} />
-                  </Route>
-
-                  <Route element={<RoleGuard allowedRoles={['PLACEMENT_OFFICE', 'FACULTY', 'HOD', 'IC', 'RECRUITER', 'CORPORATE']} />}>
-                    <Route path="/manage/applications" element={<ApplicationList />} />
-                    <Route path="/manage/applications/:id" element={<ApplicationDetail />} />
-                  </Route>
-
-                  <Route element={<RoleGuard allowedRoles={['STUDENT']} />}>
-                    {/* Placeholder content removed as it's now handled by the RoleGuarded routes above */}
-                  </Route>
-
-                  <Route path="/guides" element={<GuideAssignment />} />
-                  <Route path="/assigned-students" element={<AssignedStudents />} />
-                  <Route path="/guide/student/:id" element={<StudentDetailsPage />} />
-                  <Route path="/profile" element={<PlacementProfile />} />
-                  <Route path="/closure" element={<ClosureEvaluation />} />
-                </Route>
-
-
-
-                <Route path="/unauthorized" element={<Unauthorized />} />
-
-                {/* Catch all */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <AppRoutes />
             </ErrorBoundary>
           </Layout>
         </Router>
