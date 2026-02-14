@@ -245,6 +245,11 @@ export const InternshipService = {
             github_link: app.github_link,
             linkedin_link: app.linkedin_link,
             offer_letter_url: app.offer_letter_url,
+            completion_letter_url: app.completion_letter_url,
+            credits: app.credits || app.credit_points,
+            credit_points: app.credit_points,
+            credits_authorized: app.credits_authorized || (app.credits > 0) || (app.credit_points > 0),
+            is_completed: app.is_completed || app.status === 'COMPLETED' || app.status === 'FINISHED',
             internship: app.internship || null,
             student: app.student || null
         }));
@@ -359,14 +364,14 @@ export const InternshipService = {
 
     // Admin/Placement Coordinator Methods for Internal Internship Approval
     approveInternship: async (id: string): Promise<any> => {
-        // For Placement Coordinator: POST /admin/internships/{id}/approve
-        const response = await api.post(`/admin/internships/${id}/approve`);
+        // For Placement Coordinator: POST /internships/{id}/approve
+        const response = await api.post(`/internships/${id}/approve`);
         return response.data;
     },
 
     rejectInternship: async (id: string): Promise<any> => {
-        // For Placement Coordinator: POST /admin/internships/{id}/reject
-        const response = await api.post(`/admin/internships/${id}/reject`);
+        // For Placement Coordinator: POST /internships/{id}/reject
+        const response = await api.post(`/internships/${id}/reject`);
         return response.data;
     }
 };

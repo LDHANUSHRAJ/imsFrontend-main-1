@@ -1,13 +1,15 @@
 import axios from "axios";
 
-// Using the deployed URL from the user-provided documentation
-export const BASE_URL = "https://internshipportal-4iul.onrender.com";
+// Using environment variable for flexibility
+export const BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://internshipportal-4iul.onrender.com";
 
 const api = axios.create({
     baseURL: BASE_URL,
     headers: {
         "Content-Type": "application/json",
     },
+    // Adding timeout to fail faster during network issues
+    timeout: 15000,
 });
 
 api.interceptors.request.use((config) => {

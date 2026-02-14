@@ -79,7 +79,7 @@ const PlacementOfficerDashboard = () => {
     const handleRejectSystem = async (id: string, title: string) => {
         if (!window.confirm(`Reject internship "${title}"?`)) return;
         try {
-            await InternshipService.reject(id); // Using generic reject
+            await InternshipService.rejectInternship(id);
             addNotification({
                 title: 'Rejected',
                 message: 'Internship rejected.',

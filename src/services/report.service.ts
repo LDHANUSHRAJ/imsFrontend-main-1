@@ -29,7 +29,9 @@ export interface ActiveInternship {
     company_name: string;
     type: 'INTERNAL' | 'EXTERNAL';
     status?: string;
-    credits?: number; // Track if credits have been authorized
+    credits?: number;
+    credits_authorized?: boolean;
+    is_completed?: boolean;
 }
 
 export interface WeeklyReportCreate {
@@ -56,7 +58,9 @@ export const ReportService = {
                 company_name: item.company_name || item.internship?.corporate?.company_name || item.corporate?.company_name || 'Company',
                 type: item.type || (item.is_external ? 'EXTERNAL' : 'INTERNAL'),
                 status: item.status,
-                credits: item.credits || item.credit_points // Map credits from backend
+                credits: item.credits || item.credit_points, // Map credits from backend
+                credits_authorized: item.credits_authorized || (item.credits > 0) || (item.credit_points > 0),
+                is_completed: item.is_completed || item.status === 'COMPLETED' || item.status === 'FINISHED'
             }));
         } catch (error) {
             console.error('Error fetching active internships:', error);

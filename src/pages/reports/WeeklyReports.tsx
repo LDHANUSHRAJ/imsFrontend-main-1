@@ -64,28 +64,32 @@ const WeeklyReports = () => {
                         });
                     } else {
                         studentApplications.forEach(app => {
-                            if (app.internship && (app.status === 'ACCEPTED' || app.status === 'ACTIVE')) {
+                            if (app.internship && ['ACCEPTED', 'ACTIVE', 'COMPLETED', 'FINISHED'].includes(app.status)) {
                                 displayInternships.push({
                                     id: app.internship.id,
                                     title: app.internship.title,
                                     company_name: app.internship.corporate?.company_name || 'Christ University',
                                     type: 'INTERNAL',
-                                    status: app.status === 'ACTIVE' ? 'ACTIVE' : 'PENDING_START',
-                                    credits: app.credits || app.credit_points
+                                    status: ['ACCEPTED', 'ACTIVE', 'COMPLETED', 'FINISHED'].includes(app.status) ? (app.status === 'ACTIVE' ? 'ACTIVE' : 'PENDING_START') : app.status,
+                                    credits: app.credits || app.credit_points,
+                                    credits_authorized: app.credits_authorized,
+                                    is_completed: app.is_completed || app.status === 'COMPLETED' || app.status === 'FINISHED'
                                 });
                             }
                         });
                     }
                 } else {
                     studentApplications.forEach(app => {
-                        if (app.internship && (app.status === 'ACCEPTED' || app.status === 'ACTIVE')) {
+                        if (app.internship && ['ACCEPTED', 'ACTIVE', 'COMPLETED', 'FINISHED'].includes(app.status)) {
                             displayInternships.push({
                                 id: app.internship.id,
                                 title: app.internship.title,
                                 company_name: app.internship.corporate?.company_name || 'Christ University',
                                 type: 'INTERNAL',
-                                status: app.status === 'ACTIVE' ? 'ACTIVE' : 'PENDING_START',
-                                credits: app.credits || app.credit_points
+                                status: ['ACCEPTED', 'ACTIVE', 'COMPLETED', 'FINISHED'].includes(app.status) ? (app.status === 'ACTIVE' ? 'ACTIVE' : 'PENDING_START') : app.status,
+                                credits: app.credits || app.credit_points,
+                                credits_authorized: app.credits_authorized,
+                                is_completed: app.is_completed || app.status === 'COMPLETED' || app.status === 'FINISHED'
                             });
                         }
                     });
@@ -291,7 +295,7 @@ const WeeklyReports = () => {
 
                             <div className="flex flex-wrap gap-3 w-full md:w-auto">
                                 {/* Status Badges or Action Buttons */}
-                                {internship?.credits ? (
+                                {internship?.credits_authorized ? (
                                     <div className="bg-emerald-100 text-emerald-700 font-black px-6 py-3 rounded-xl flex items-center gap-2 shadow-sm border-2 border-emerald-200 text-sm">
                                         <CheckCircle2 size={18} /> Finished - Credits Authorized
                                     </div>

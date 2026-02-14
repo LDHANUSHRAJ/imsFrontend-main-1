@@ -83,7 +83,7 @@ export interface StudentApplication {
     skills?: string[]; // Skills submitted during application
     github_link?: string | null;
     linkedin_link?: string | null;
-    status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'SHORTLISTED' | 'REJECTED' | 'ACCEPTED' | 'OFFER_RECEIVED' | 'ARCHIVED' | 'ACTIVE';
+    status: 'DRAFT' | 'SUBMITTED' | 'UNDER_REVIEW' | 'SHORTLISTED' | 'REJECTED' | 'ACCEPTED' | 'OFFER_RECEIVED' | 'ARCHIVED' | 'ACTIVE' | 'COMPLETED' | 'FINISHED';
     created_at: string;
     internship_id: string;
     student_id: string;
@@ -91,6 +91,8 @@ export interface StudentApplication {
     completion_letter_url?: string | null; // Completion certificate uploaded by student
     credits?: number; // Track if credits have been authorized
     credit_points?: number; // Alternative field name for credits from backend
+    credits_authorized?: boolean;
+    is_completed?: boolean;
     internship?: { // Nested internship details from backend
         id: string;
         title: string;
@@ -214,8 +216,8 @@ export interface InternshipCompletion {
     guideRating: number;
     finalReportUrl?: string;
     completion_letter_url?: string; // Completion certificate URL
-    status: 'IN_PROGRESS' | 'PENDING_REVIEW' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
-    certificateUrl?: string;
+    credits_authorized?: boolean;
+    is_completed?: boolean;
     completedAt?: string;
 }
 

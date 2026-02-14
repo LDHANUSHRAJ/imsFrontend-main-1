@@ -31,11 +31,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const storedUser = localStorage.getItem('imsUser');
         if (storedUser) {
             try {
-                if (storedUser.startsWith('{') || storedUser.startsWith('[')) {
+                // Defensive check for JSON format
+                if (storedUser.trim().startsWith('{') || storedUser.trim().startsWith('[')) {
                     const parsedUser = JSON.parse(storedUser);
+                    // Check for both access_token (new) and token (old/compat)
                     if (parsedUser && (parsedUser.access_token || parsedUser.token)) {
                         setUser(parsedUser);
                         setIsAuthenticated(true);
+                    } else {
+                        console.warn("Stored user missing token, clearing...");
+                        localStorage.removeItem('imsUser');
                     }
                 } else {
                     localStorage.removeItem('imsUser');
@@ -43,7 +48,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             } catch (error) {
                 console.error("Auth check failed", error);
                 localStorage.removeItem('imsUser');
-                logout();
+                setIsAuthenticated(false);
+                setUser(null);
             }
         }
         setLoading(false);
